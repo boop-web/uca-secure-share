@@ -21,6 +21,7 @@ import {
   TbSettings,
   TbShare,
   TbSocial,
+  TbHome,
 } from "react-icons/tb";
 import { FormattedMessage } from "react-intl";
 
@@ -34,6 +35,7 @@ const categories = [
   { name: "S3", icon: <TbBucket /> },
   { name: "Legal", icon: <TbScale /> },
   { name: "Cache", icon: <TbServerBolt /> },
+  { name: "HomePage", icon: <TbHome /> },
 ];
 
 const useStyles = createStyles((theme) => ({

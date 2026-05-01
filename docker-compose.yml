@@ -1,6 +1,6 @@
 services:
-  pingvin-share:
-    image: stonith404/pingvin-share # or ghcr.io/stonith404/pingvin-share
+  secure-share:
+    image: ucagg/secureshare:latest
     restart: unless-stopped
     ports:
       - 3000:3000
@@ -9,6 +9,7 @@ services:
     volumes:
       - "./data:/opt/app/backend/data"
       - "./data/images:/opt/app/frontend/public/img"
+      - "./data:/opt/app/backend/prisma"
   #      - "./config.yaml:/opt/app/config.yaml" # Add this line, if you want to configure pingvin-share via config file and not via UI
 
   # To add ClamAV, to scan your shares for malicious files, 

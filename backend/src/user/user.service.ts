@@ -13,8 +13,8 @@ import { CreateUserDTO } from "./dto/createUser.dto";
 import { UpdateUserDto } from "./dto/updateUser.dto";
 
 @Injectable()
-export class UserSevice {
-  private readonly logger = new Logger(UserSevice.name);
+export class UserService {
+  private readonly logger = new Logger(UserService.name);
 
   constructor(
     private prisma: PrismaService,

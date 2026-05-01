@@ -18,7 +18,7 @@ import { EmailService } from "src/email/email.service";
 import { PrismaService } from "src/prisma/prisma.service";
 import { OAuthService } from "../oauth/oauth.service";
 import { GenericOidcProvider } from "../oauth/provider/genericOidc.provider";
-import { UserSevice } from "../user/user.service";
+import { UserService } from "../user/user.service";
 import { AuthRegisterDTO } from "./dto/authRegister.dto";
 import { AuthSignInDTO } from "./dto/authSignIn.dto";
 import { LdapService } from "./ldap.service";
@@ -31,7 +31,7 @@ export class AuthService {
     private config: ConfigService,
     private emailService: EmailService,
     private ldapService: LdapService,
-    private userService: UserSevice,
+    private userService: UserService,
     @Inject(forwardRef(() => OAuthService)) private oAuthService: OAuthService,
   ) {}
   private readonly logger = new Logger(AuthService.name);

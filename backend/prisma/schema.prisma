@@ -161,3 +161,20 @@ model Config {
 
   @@id([name, category])
 }
+
+model HomePage {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  title       String   @default("Welcome to UCA")
+  description String   @default("Share files securely with style")
+  bullet1Name String   @default("Secure Sharing")
+  bullet1Desc String   @default("End-to-end encrypted file sharing")
+  bullet2Name String   @default("Lightning Fast")
+  bullet2Desc String   @default("Optimized performance for amazing developers")
+  bullet3Name String   @default("Anonymous")
+  bullet3Desc String   @default("Your privacy is our priority")
+  buttonText  String   @default("Get Started")
+  updatedBy   String?
+}

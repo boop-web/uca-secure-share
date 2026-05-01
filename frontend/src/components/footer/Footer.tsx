@@ -27,16 +27,16 @@ const Footer = () => {
     <MFooter height="auto" py={6} px="xl" zIndex={100}>
       <SimpleGrid cols={isMobile ? 2 : 3} m={0}>
         {!isMobile && <div></div>}
-        <Text size="xs" color="dimmed" align={isMobile ? "left" : "center"}>
-          Powered by{" "}
-          <Anchor
-            size="xs"
-            href="https://github.com/stonith404/pingvin-share"
-            target="_blank"
-          >
-            Pingvin Share
-          </Anchor>
-        </Text>
+         <Text size="xs" color="dimmed" align={isMobile ? "left" : "center"}>
+           Powered by{" "}
+           <Anchor
+             size="xs"
+             href="https://ucagg.de"
+             target="_blank"
+           >
+             Ucagg.de
+           </Anchor>
+         </Text>
         <div>
           {config.get("legal.enabled") && (
             <Text size="xs" color="dimmed" align="right">

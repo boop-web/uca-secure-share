@@ -3,9 +3,9 @@ import type { Config } from "@docusaurus/types";
 import { themes as prismThemes } from "prism-react-renderer";
 
 const config: Config = {
-  title: "Pingvin Share",
+  title: "UCA Secure Share",
   tagline:
-    "Pingvin Share is self-hosted file sharing platform and an alternative for WeTransfer.",
+    "UCA Secure Share is self-hosted file sharing platform and an alternative for WeTransfer.",
   favicon: "img/pingvinshare.svg",
 
   url: "https://stonith404.github.io",
@@ -41,9 +41,9 @@ const config: Config = {
       respectPrefersColorScheme: true,
     },
     navbar: {
-      title: "Pingvin Share",
+      title: "UCA Secure Share",
       logo: {
-        alt: "Pingvin Share Logo",
+        alt: "UCA Secure Share Logo",
         src: "img/pingvinshare.svg",
       },
       items: [

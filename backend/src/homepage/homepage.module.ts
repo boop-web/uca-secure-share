@@ -1,12 +1,14 @@
 import { Module } from "@nestjs/common";
 import { HomepageService } from "./homepage.service";
 import { HomepageController } from "./homepage.controller";
-import { PrismaService } from "src/prisma/prisma.service";
-import { UserService } from "src/user/user.service";
-import { JwtGuard } from "src/auth/guard/jwt.guard";
+import { PrismaModule } from "src/prisma/prisma.module";
+import { UserModule } from "src/user/user.module";
+import { AuthModule } from "src/auth/auth.module";
+import { ConfigModule } from "src/config/config.module";
 
 @Module({
-  providers: [HomepageService, PrismaService, UserService, JwtGuard],
+  imports: [PrismaModule, UserModule, AuthModule, ConfigModule],
+  providers: [HomepageService],
   controllers: [HomepageController],
   exports: [HomepageService],
 })

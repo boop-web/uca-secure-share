@@ -3,21 +3,20 @@ import {
   Container,
   createStyles,
   Group,
-  List,
   Text,
   Title,
   useMantineTheme,
+  List,
+  Box,
 } from "@mantine/core";
 import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/router";
-import { TbCheck } from "react-icons/tb";
+import { TbCheck, TbMask } from "react-icons/tb";
 import Logo from "../components/Logo";
 import Meta from "../components/Meta";
 import useUser from "../hooks/user.hook";
 import useConfig from "../hooks/config.hook";
-import homepageService from "../services/homepage.service";
-import { HomepageDto } from "../types/homepage.type";
 
 const useStyles = createStyles((theme) => ({
   inner: {
@@ -29,7 +28,7 @@ const useStyles = createStyles((theme) => ({
     zIndex: 2,
   },
   content: {
-    maxWidth: 580,
+    maxWidth: 700,
     marginRight: `calc(${theme.spacing.md} * 3)`,
     [theme.fn.smallerThan("md")]: {
       maxWidth: "100%",
@@ -44,6 +43,7 @@ const useStyles = createStyles((theme) => ({
     textShadow: "0 0 20px rgba(0, 255, 65, 0.5), 0 0 40px rgba(0, 255, 65, 0.3)",
     letterSpacing: 2,
     fontFamily: "monospace",
+    animation: "$glitch 3s infinite",
     [theme.fn.smallerThan("xs")]: {
       fontSize: 32,
     },
@@ -56,6 +56,7 @@ const useStyles = createStyles((theme) => ({
     textTransform: "uppercase",
     marginTop: theme.spacing.md,
     textShadow: "0 0 10px rgba(255, 0, 110, 0.5)",
+    fontFamily: "monospace",
   },
   description: {
     color: "#a0a0a0",
@@ -66,12 +67,24 @@ const useStyles = createStyles((theme) => ({
     borderLeft: "3px solid #00ff41",
     paddingLeft: theme.spacing.md,
   },
-  listItem: {
-    color: "#b0b0b0",
+  lawSection: {
+    color: "#ff9900",
+    marginTop: theme.spacing.xl,
+    fontSize: 14,
+    lineHeight: 1.5,
+    fontFamily: "monospace",
+    border: "1px solid rgba(255, 153, 0, 0.3)",
+    borderRadius: theme.radius.md,
+    padding: theme.spacing.md,
+    backgroundColor: "rgba(255, 153, 0, 0.05)",
+  },
+  serverInfo: {
+    color: "#00ccff",
+    marginTop: theme.spacing.md,
+    fontSize: 14,
     fontFamily: "monospace",
     "& b": {
       color: "#00ff41",
-      textShadow: "0 0 8px rgba(0, 255, 65, 0.4)",
     },
   },
   control: {
@@ -93,42 +106,10 @@ const useStyles = createStyles((theme) => ({
       flex: 1,
     },
   },
-  controlSecondary: {
-    backgroundColor: "transparent",
-    color: "#ff006e",
-    border: "2px solid #ff006e",
-    fontFamily: "monospace",
-    fontSize: 16,
-    fontWeight: 700,
-    letterSpacing: 2,
-    transition: "all 0.3s ease",
-    "&:hover": {
-      backgroundColor: "#ff006e",
-      color: "#0a0a0a",
-      boxShadow: "0 0 20px rgba(255, 0, 110, 0.6)",
-    },
-  },
   image: {
     [theme.fn.smallerThan("md")]: {
       display: "none",
     },
-  },
-  highlight: {
-    position: "relative",
-    backgroundColor: "rgba(0, 255, 65, 0.15)",
-    borderRadius: theme.radius.sm,
-    padding: "4px 12px",
-    border: "1px solid rgba(0, 255, 65, 0.3)",
-  },
-  sakuraBg: {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    pointerEvents: "none",
-    zIndex: 0,
-    overflow: "hidden",
   },
   scanline: {
     position: "fixed",
@@ -140,6 +121,7 @@ const useStyles = createStyles((theme) => ({
       "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 255, 65, 0.03) 2px, rgba(0, 255, 65, 0.03) 4px)",
     pointerEvents: "none",
     zIndex: 1,
+    animation: "$crtFlicker 5s infinite",
   },
   gridBg: {
     position: "fixed",
@@ -153,6 +135,25 @@ const useStyles = createStyles((theme) => ({
     pointerEvents: "none",
     zIndex: 0,
   },
+  japaneseWatermark: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    pointerEvents: "none",
+    zIndex: 0,
+    opacity: 0.03,
+    fontFamily: "sans-serif",
+    fontSize: "1.5rem",
+    color: "#00ff41",
+    transform: "rotate(-45deg)",
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "2rem",
+    padding: "2rem",
+    overflow: "hidden",
+  },
   samuraiIcon: {
     filter: "drop-shadow(0 0 20px rgba(0, 255, 65, 0.5))",
     animation: "$float 3s ease-in-out infinite",
@@ -161,17 +162,17 @@ const useStyles = createStyles((theme) => ({
     "0%, 100%": { transform: "translateY(0px)" },
     "50%": { transform: "translateY(-15px)" },
   },
-  glitchText: {
-    animation: "$glitch 3s infinite",
-    position: "relative",
-    display: "inline-block",
-  },
   "@keyframes glitch": {
     "0%, 100%": { transform: "translate(0)" },
     "20%": { transform: "translate(-2px, 2px)" },
     "40%": { transform: "translate(-2px, -2px)" },
     "60%": { transform: "translate(2px, 2px)" },
     "80%": { transform: "translate(2px, -2px)" },
+  },
+  "@keyframes crtFlicker": {
+    "0%, 100%": { opacity: 1 },
+    "50%": { opacity: 0.98 },
+    "51%": { opacity: 1 },
   },
 }));
 
@@ -191,18 +192,6 @@ export default function Home() {
   const router = useRouter();
   const config = useConfig();
   const [signupEnabled, setSignupEnabled] = useState(true);
-  const [homeData, setHomeData] = useState<HomepageDto>({
-    title: "Welcome to UCA",
-    description:
-      "01010100 01101000 01100101 00100000 01000110 01110101 01110100 01110101 01110010 01100101 00100000 01101001 01110011 00100000 01001110 01100101 01100001 01110010 00001010 01000101 01101110 01110100 01100101 01110010 00100000 01110100 01101000 01100101 00100000 01010011 01100001 01101101 01110101 01110010 01100001 01101001 00100000 01010011 01110100 01111001 01101100 01100101",
-    bullet1Name: "Anonymous",
-    bullet1Desc: "Your digital footprint vanishes like cherry blossoms in the wind",
-    bullet2Name: "Encrypted",
-    bullet2Desc: "AES-256 encryption with zero-knowledge architecture",
-    bullet3Name: "Samurai-Grade",
-    bullet3Desc: "Crafted with precision by elite code warriors",
-    buttonText: "Enter_The_Matrix",
-  });
   const [loading, setLoading] = useState(true);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -218,14 +207,8 @@ export default function Home() {
     } catch (error) {
       setSignupEnabled(true);
     }
+    setLoading(false);
   }, [config]);
-
-  useEffect(() => {
-    homepageService.get().then((data) => {
-      if (data) setHomeData(data);
-      setLoading(false);
-    });
-  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -235,14 +218,14 @@ export default function Home() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     const particles: any[] = [];
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < 30; i++) {
       particles.push({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
-        vx: (Math.random() - 0.5) * 0.5,
-        vy: (Math.random() - 0.5) * 0.5,
-        size: Math.random() * 2 + 1,
-        opacity: Math.random() * 0.5 + 0.2,
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: (Math.random() - 0.5) * 0.3,
+        size: Math.random() * 1.5 + 0.5,
+        opacity: Math.random() * 0.3 + 0.1,
       });
     }
     function animate() {
@@ -269,17 +252,18 @@ export default function Home() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const getButtonHref = () => {
-    return signupEnabled ? "/auth/signUp" : "/auth/signIn";
-  };
-
   if (loading) return null;
 
   return (
     <>
-      <Meta title="Home" />
+      <Meta title="UCA Secure Share" />
       <div className={classes.gridBg} />
       <div className={classes.scanline} />
+      <div className={classes.japaneseWatermark}>
+        {Array(40).fill("セキュア共有").map((text, i) => (
+          <span key={i}>{text}</span>
+        ))}
+      </div>
       <canvas
         ref={canvasRef}
         style={{
@@ -290,89 +274,63 @@ export default function Home() {
           pointerEvents: "none",
         }}
       />
-      <div
-        className={classes.sakuraBg}
-        style={{
-          background:
-            "radial-gradient(ellipse at 50% 0%, rgba(255, 0, 110, 0.1) 0%, transparent 60%)",
-        }}
-      />
-      {[...Array(15)].map((_, i) => (
+      {[...Array(12)].map((_, i) => (
         <SakuraPetal
           key={i}
           delay={i * 0.8}
           left={Math.random() * 100}
-          size={12 + Math.random() * 18}
-          duration={8 + Math.random() * 12}
+          size={10 + Math.random() * 16}
+          duration={10 + Math.random() * 15}
         />
       ))}
       <Container style={{ position: "relative", zIndex: 2 }}>
         <div className={classes.inner}>
           <div className={classes.content}>
-            <div className={classes.glitchText}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <TbMask size={32} color="#00ff41" />
               <Title className={classes.title}>
-                {homeData.title || "UCA"}
+                Welcome to UCA Secure Share
               </Title>
             </div>
             <Text className={classes.subtitle}>
-              {homeData.description || "Share files securely"}
+              Personal Encrypted File Sharing System
             </Text>
-            <List
-              mt={30}
-              spacing="sm"
-              size="sm"
-              icon={
-                <div
-                  style={{
-                    width: 20,
-                    height: 20,
-                    borderRadius: "50%",
-                    background:
-                      "linear-gradient(45deg, #00ff41, #ff006e)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <TbCheck size={12} color="#0a0a0a" />
-                </div>
-              }
-            >
-              <List.Item className={classes.listItem}>
-                <b>{homeData.bullet1Name || "Feature 1"}</b> -{" "}
-                {homeData.bullet1Desc || "Description 1"}
-              </List.Item>
-              <List.Item className={classes.listItem}>
-                <b>{homeData.bullet2Name || "Feature 2"}</b> -{" "}
-                {homeData.bullet2Desc || "Description 2"}
-              </List.Item>
-              <List.Item className={classes.listItem}>
-                <b>{homeData.bullet3Name || "Feature 3"}</b> -{" "}
-                {homeData.bullet3Desc || "Description 3"}
-              </List.Item>
-            </List>
+            
+            <Text className={classes.description} mt="xl">
+              Built for personal use – send and receive files without paywalls, subscriptions, or hidden costs. This system is crafted exclusively for private use as part of the UCA.gg infrastructure.
+            </Text>
+
+            <Text className={classes.description} mt="md">
+              All files use encrypted storage, and share links are end-to-end encrypted. Every transfer is safe, secure, and private by design.
+            </Text>
+
+            <Text className={classes.serverInfo} mt="xl">
+              <b>Server:</b> High-speed US-based infrastructure with enterprise-grade anti-DDoS protection. Fast, reliable transfers globally.
+            </Text>
+
+            <Text className={classes.serverInfo} mt="sm">
+              <b>Access:</b> No registration required. Free, unlimited use for legal personal file sharing.
+            </Text>
+
+            <Box className={classes.lawSection} mt="xl">
+              <Text weight={700} color="#ff9900" mb="sm">Compliance with German Federal Law</Text>
+              <Text size="sm">
+                All shares must adhere to StGB (German Criminal Code) and NetzDG. Prohibited content includes: hate speech, Nazi symbolism (Section 86a StGB), child sexual abuse material (Section 184b StGB), malware, ransomware, unauthorized copyrighted material, and violent extremist content. Illegal shares are removed immediately. Upon detection of such violations, all retained data including IP addresses, cache logs, and all records from the time the file was uploaded will be forwarded to law enforcement authorities.
+              </Text>
+            </Box>
+
             <Group mt={30}>
               <Button
                 component={Link}
-                href={getButtonHref()}
+                href="/upload"
                 radius="xs"
                 size="md"
                 className={classes.control}
               >
-                {homeData.buttonText || "Get Started"}
-              </Button>
-              <Button
-                component={Link}
-                href="https://github.com/boop-web/pingvin-share-ucagg"
-                target="_blank"
-                variant="outline"
-                radius="xs"
-                size="md"
-                className={classes.controlSecondary}
-              >
-                [ Source_Code ]
+                [ Go to Upload ]
               </Button>
             </Group>
+
             <Text
               mt="xl"
               size="xs"
@@ -383,9 +341,7 @@ export default function Home() {
                 paddingTop: 10,
               }}
             >
-              {"// "}System initialized by{" "}
-              <span style={{ color: "#ff006e" }}>UCA.gg</span>{" "}
-              — Where samurai code meets digital anonymity
+              {"// "}Happy Sharing – セキュア・シェア (Secure Share) – UCA Private Infrastructure
             </Text>
           </div>
           <Group className={classes.image} align="center">
@@ -427,7 +383,7 @@ export default function Home() {
         }
         ::-webkit-scrollbar-thumb {
           background: #00ff41;
-          borderRadius: 4px;
+          border-radius: 4px;
         }
         ::selection {
           background: rgba(0, 255, 65, 0.3);

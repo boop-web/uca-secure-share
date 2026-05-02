@@ -32,7 +32,7 @@ RUN npm run build && npm prune --production
 FROM node:22-alpine AS runner
 ENV NODE_ENV=docker
 
-# Delete default node user
+# Delete default node user
 RUN deluser --remove-home node
 
 RUN apk update --no-cache \
@@ -53,8 +53,7 @@ COPY --from=backend-builder /opt/app/package.json ./
 COPY --from=backend-builder /opt/app/tsconfig.json ./
 
 WORKDIR /opt/app
-
-COPY ./reverse-proxy  /opt/app/reverse-proxy
+COPY ./reverse-proxy /opt/app/reverse-proxy
 COPY ./scripts/docker ./scripts/docker
 
 EXPOSE 3000

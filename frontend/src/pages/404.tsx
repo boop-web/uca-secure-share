@@ -15,7 +15,8 @@ const useStyles = createStyles((theme) => ({
     fontSize: 220,
     lineHeight: 1,
     marginBottom: 20,
-    color: theme.colors.gray[2],
+    color: theme.colors.ember[5],
+    opacity: 0.9,
 
     [theme.fn.smallerThan("sm")]: {
       fontSize: 120,

@@ -12,7 +12,7 @@ export const configVariables = {
   general: {
     appName: {
       type: "string",
-      defaultValue: "UCA Secure Share",
+      defaultValue: "UCA Share",
       secret: false,
     },
     appUrl: {

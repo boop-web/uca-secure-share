@@ -1,11 +1,29 @@
-import { Anchor, Footer as MFooter, SimpleGrid, Text } from "@mantine/core";
-import { useMediaQuery } from "@mantine/hooks";
+import { createStyles } from "@mantine/core";
 import useConfig from "../../hooks/config.hook";
 import useTranslate from "../../hooks/useTranslate.hook";
+import { ui } from "../../styles/mantine.style";
+
+const useStyles = createStyles(() => ({
+  footer: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "8px 18px",
+    justifyContent: "center",
+    padding: "26px 20px",
+    marginTop: 40,
+    color: ui.faint,
+    fontSize: 13,
+    borderTop: `1px solid ${ui.line}`,
+    "& a": { color: ui.muted },
+    "& a:hover": { color: ui.text },
+  },
+}));
 
 const Footer = () => {
   const t = useTranslate();
   const config = useConfig();
+  const { classes } = useStyles();
+
   const hasImprint = !!(
     config.get("legal.imprintUrl") || config.get("legal.imprintText")
   );
@@ -21,41 +39,29 @@ const Footer = () => {
       config.get("legal.privacyPolicyUrl")) ||
     "/privacy";
 
-  const isMobile = useMediaQuery("(max-width: 700px)");
+  let host = "share.ucagg.de";
+  try {
+    host = new URL(config.get("general.appUrl")).host || host;
+  } catch {
+    /* keep default */
+  }
 
   return (
-    <MFooter height="auto" py={6} px="xl" zIndex={100}>
-      <SimpleGrid cols={isMobile ? 2 : 3} m={0}>
-        {!isMobile && <div></div>}
-         <Text size="xs" color="dimmed" align={isMobile ? "left" : "center"}>
-           Powered by{" "}
-           <Anchor
-             size="xs"
-             href="https://ucagg.de"
-             target="_blank"
-           >
-             Ucagg.de
-           </Anchor>
-         </Text>
-        <div>
-          {config.get("legal.enabled") && (
-            <Text size="xs" color="dimmed" align="right">
-              {hasImprint && (
-                <Anchor size="xs" href={imprintUrl}>
-                  {t("imprint.title")}
-                </Anchor>
-              )}
-              {hasImprint && hasPrivacy && " • "}
-              {hasPrivacy && (
-                <Anchor size="xs" href={privacyUrl}>
-                  {t("privacy.title")}
-                </Anchor>
-              )}
-            </Text>
-          )}
-        </div>
-      </SimpleGrid>
-    </MFooter>
+    <footer className={classes.footer}>
+      <span>© UCA · {host}</span>
+      {config.get("legal.enabled") && hasImprint && (
+        <a href={imprintUrl}>{t("imprint.title")}</a>
+      )}
+      {config.get("legal.enabled") && hasPrivacy && (
+        <a href={privacyUrl}>{t("privacy.title")}</a>
+      )}
+      <a href="https://ai.ucagg.de" rel="noopener">
+        UCA assistant
+      </a>
+      <a href="https://audio.ucagg.de" rel="noopener">
+        UCA Audio
+      </a>
+    </footer>
   );
 };
 

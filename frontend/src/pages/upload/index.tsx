@@ -6,6 +6,7 @@ import pLimit from "p-limit";
 import { useEffect, useRef, useState } from "react";
 import { FormattedMessage } from "react-intl";
 import Meta from "../../components/Meta";
+import PageTitle from "../../components/core/PageTitle";
 import Dropzone from "../../components/upload/Dropzone";
 import FileList from "../../components/upload/FileList";
 import showCompletedUploadModal from "../../components/upload/modals/showCompletedUploadModal";
@@ -202,7 +203,11 @@ const Upload = ({
   return (
     <>
       <Meta title={t("upload.title")} />
-      <Group position="right" mb={20}>
+      <PageTitle
+        kicker={t("upload.title")}
+        title="Share files"
+        description="Drop files, then choose the link, expiry and who can open it."
+      >
         <Button
           loading={isUploading}
           disabled={files.length <= 0}
@@ -210,7 +215,7 @@ const Upload = ({
         >
           <FormattedMessage id="common.button.share" />
         </Button>
-      </Group>
+      </PageTitle>
       <Dropzone
         title={
           !autoOpenCreateUploadModal && files.length > 0

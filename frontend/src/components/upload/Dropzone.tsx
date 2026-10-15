@@ -15,15 +15,20 @@ const useStyles = createStyles((theme) => ({
   },
 
   dropzone: {
-    borderWidth: 1,
-    paddingBottom: 50,
+    borderWidth: 1.5,
+    borderStyle: "dashed",
+    borderColor: "rgba(255,138,61,.45)",
+    backgroundColor: theme.colors.dark[7],
+    paddingTop: 36,
+    paddingBottom: 56,
+    "&:hover, &[data-accept]": {
+      backgroundColor: "rgba(255,138,61,.06)",
+      borderColor: theme.colors.ember[5],
+    },
   },
 
   icon: {
-    color:
-      theme.colorScheme === "dark"
-        ? theme.colors.dark[3]
-        : theme.colors.gray[4],
+    color: theme.colors.ember[5],
   },
 
   control: {
@@ -77,7 +82,7 @@ const Dropzone = ({
       >
         <div style={{ pointerEvents: "none" }}>
           <Group position="center">
-            <TbCloudUpload size={50} />
+            <TbCloudUpload size={46} className={classes.icon} />
           </Group>
           <Text align="center" weight={700} size="lg" mt="xl">
             {title || <FormattedMessage id="upload.dropzone.title" />}
@@ -93,9 +98,10 @@ const Dropzone = ({
       <Center>
         <Button
           className={classes.control}
-          variant="light"
+          variant="filled"
           size="sm"
           radius="xl"
+          aria-label="Choose files"
           disabled={isUploading}
           onClick={() => openRef.current && openRef.current()}
         >

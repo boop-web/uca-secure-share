@@ -1,16 +1,17 @@
 services:
-  secure-share:
-    image: ucagg/secureshare:latest
+  uca-share:
+    image: uca-secure-share:latest
     restart: unless-stopped
     ports:
-      - 3000:3000
+      # Bound to localhost: put a reverse proxy (nginx, Caddy) in front.
+      # Its body size limit must be above share.chunkSize (default 10 MB).
+      - 127.0.0.1:3000:3000
     environment:
-      - TRUST_PROXY=false # Set to true if a reverse proxy is in front of the container
+      - TRUST_PROXY=true # set to false if nothing proxies in front of the container
     volumes:
       - "./data:/opt/app/backend/data"
       - "./data/images:/opt/app/frontend/public/img"
-      - "./data:/opt/app/backend/prisma"
-  #      - "./config.yaml:/opt/app/config.yaml" # Add this line, if you want to configure pingvin-share via config file and not via UI
+  #      - "./config.yaml:/opt/app/config.yaml" # Add this line, if you want to configure the app via config file and not via UI
 
-  # To add ClamAV, to scan your shares for malicious files, 
+  # To add ClamAV, to scan your shares for malicious files,
   # see https://stonith404.github.io/pingvin-share/setup/integrations/#clamav-docker-only

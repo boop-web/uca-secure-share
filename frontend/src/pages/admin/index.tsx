@@ -1,111 +1,98 @@
-import {
-  Center,
-  Col,
-  createStyles,
-  Grid,
-  Paper,
-  Stack,
-  Text,
-  Title,
-} from "@mantine/core";
+import { createStyles, SimpleGrid, Stack, Text, Title } from "@mantine/core";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { TbLink, TbRefresh, TbSettings, TbUsers } from "react-icons/tb";
+import { TbHome, TbLink, TbSettings, TbUsers } from "react-icons/tb";
 import { FormattedMessage } from "react-intl";
 import Meta from "../../components/Meta";
 import useTranslate from "../../hooks/useTranslate.hook";
-import configService from "../../services/config.service";
+import { ui } from "../../styles/mantine.style";
 
-const useStyles = createStyles((theme) => ({
+const useStyles = createStyles(() => ({
   item: {
     display: "flex",
-    flexDirection: "column",
     alignItems: "center",
-    justifyContent: "center",
-    textAlign: "center",
-    height: 90,
+    gap: 14,
+    padding: "18px 20px",
+    background: ui.panel,
+    border: `1px solid ${ui.line}`,
+    borderRadius: 16,
+    transition: "border-color .15s, transform .15s",
     "&:hover": {
-      boxShadow: `${theme.shadows.sm} !important`,
-      transform: "scale(1.01)",
+      borderColor: ui.lineStrong,
+      transform: "translateY(-1px)",
     },
+  },
+  icon: {
+    width: 42,
+    height: 42,
+    flex: "none",
+    borderRadius: 12,
+    display: "grid",
+    placeItems: "center",
+    color: ui.accent,
+    background: "rgba(255,138,61,.12)",
   },
 }));
 
 const Admin = () => {
-  const { classes, theme } = useStyles();
+  const { classes } = useStyles();
   const t = useTranslate();
 
-  const [managementOptions, setManagementOptions] = useState([
+  const managementOptions = [
     {
       title: t("admin.button.users"),
+      description: "Accounts, admins and invites",
       icon: TbUsers,
       route: "/admin/users",
     },
     {
       title: t("admin.button.shares"),
+      description: "All shares on this server",
       icon: TbLink,
       route: "/admin/shares",
     },
     {
       title: t("admin.button.config"),
+      description: "Limits, email, sign-in, legal",
       icon: TbSettings,
       route: "/admin/config/general",
     },
-  ]);
-
-  useEffect(() => {
-    configService
-      .isNewReleaseAvailable()
-      .then((isNewReleaseAvailable) => {
-        if (isNewReleaseAvailable) {
-          setManagementOptions([
-            ...managementOptions,
-            {
-              title: "Update",
-              icon: TbRefresh,
-              route:
-                "https://github.com/stonith404/pingvin-share/releases/latest",
-            },
-          ]);
-        }
-      })
-      .catch();
-  }, []);
+    {
+      title: "Home page",
+      description: "Edit the start page text",
+      icon: TbHome,
+      route: "/admin/homepage",
+    },
+  ];
 
   return (
     <>
       <Meta title={t("admin.title")} />
-      <Title mb={30} order={3}>
-        <FormattedMessage id="admin.title" />
-      </Title>
-      <Stack justify="space-between" style={{ height: "calc(100vh - 180px)" }}>
-        <Paper withBorder p={40}>
-          <Grid>
-            {managementOptions.map((item) => {
-              return (
-                <Col xs={6} key={item.route}>
-                  <Paper
-                    withBorder
-                    component={Link}
-                    href={item.route}
-                    key={item.title}
-                    className={classes.item}
-                  >
-                    <item.icon color={theme.colors.victoria[8]} size={35} />
-                    <Text mt={7}>{item.title}</Text>
-                  </Paper>
-                </Col>
-              );
-            })}
-          </Grid>
-        </Paper>
-
-        <Center>
-          <Text size="xs" color="dimmed">
-            <FormattedMessage id="admin.version" /> {process.env.VERSION}
-          </Text>
-        </Center>
+      <Stack spacing={4} mb={24}>
+        <Text size="xs" sx={{ color: ui.accent, letterSpacing: ".16em" }}>
+          ADMIN
+        </Text>
+        <Title order={2}>
+          <FormattedMessage id="admin.title" />
+        </Title>
       </Stack>
+      <SimpleGrid cols={2} spacing="md" breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+        {managementOptions.map((item) => (
+          <Link href={item.route} key={item.route} className={classes.item}>
+            <span className={classes.icon}>
+              <item.icon size={22} />
+            </span>
+            <span>
+              <Text weight={600}>{item.title}</Text>
+              <Text size="sm" color="dimmed">
+                {item.description}
+              </Text>
+            </span>
+          </Link>
+        ))}
+      </SimpleGrid>
+      <Text size="xs" color="dimmed" align="center" mt={40}>
+        <FormattedMessage id="admin.version" /> {process.env.VERSION}
+      </Text>
     </>
   );
 };

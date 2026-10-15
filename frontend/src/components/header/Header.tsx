@@ -7,7 +7,6 @@ import {
   Header as MantineHeader,
   Paper,
   Stack,
-  Text,
   Transition,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
@@ -17,23 +16,25 @@ import { ReactNode, useEffect, useState } from "react";
 import useConfig from "../../hooks/config.hook";
 import useUser from "../../hooks/user.hook";
 import useTranslate from "../../hooks/useTranslate.hook";
-import Logo from "../Logo";
+import { ui } from "../../styles/mantine.style";
+import Brand from "../Brand";
 import ActionAvatar from "./ActionAvatar";
 import NavbarShareMenu from "./NavbarShareMenu";
 
-const HEADER_HEIGHT = 60;
+const HEADER_HEIGHT = 64;
 
 type NavLink = {
   link?: string;
   label?: string;
   component?: ReactNode;
-  action?: () => Promise<void>;
+  primary?: boolean;
 };
 
 const useStyles = createStyles((theme) => ({
   root: {
-    position: "relative",
-    zIndex: 1,
+    position: "sticky",
+    top: 0,
+    zIndex: 50,
   },
 
   dropdown: {
@@ -42,10 +43,11 @@ const useStyles = createStyles((theme) => ({
     left: 0,
     right: 0,
     zIndex: 0,
-    borderTopRightRadius: 0,
-    borderTopLeftRadius: 0,
-    borderTopWidth: 0,
+    borderRadius: 0,
+    borderLeft: 0,
+    borderRight: 0,
     overflow: "hidden",
+    backgroundColor: ui.bgSoft,
 
     [theme.fn.largerThan("sm")]: {
       display: "none",
@@ -74,37 +76,46 @@ const useStyles = createStyles((theme) => ({
   link: {
     display: "block",
     lineHeight: 1,
-    padding: "8px 12px",
-    borderRadius: theme.radius.sm,
-    textDecoration: "none",
-    color:
-      theme.colorScheme === "dark"
-        ? theme.colors.dark[0]
-        : theme.colors.gray[7],
-    fontSize: theme.fontSizes.sm,
+    padding: "9px 12px",
+    borderRadius: 999,
+    color: ui.muted,
+    fontSize: 14.5,
     fontWeight: 500,
+    transition: "color .15s",
 
     "&:hover": {
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.colors.dark[6]
-          : theme.colors.gray[0],
+      color: ui.text,
     },
 
     [theme.fn.smallerThan("sm")]: {
       borderRadius: 0,
       padding: theme.spacing.md,
+      fontSize: 15,
     },
   },
 
   linkActive: {
     "&, &:hover": {
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.fn.rgba(theme.colors[theme.primaryColor][9], 0.25)
-          : theme.colors[theme.primaryColor][0],
-      color:
-        theme.colors[theme.primaryColor][theme.colorScheme === "dark" ? 3 : 7],
+      color: ui.text,
+      backgroundColor: "rgba(255,255,255,.05)",
+    },
+  },
+
+  primary: {
+    "&, &:hover": {
+      color: ui.onAccent,
+      backgroundImage: "linear-gradient(135deg, #ff9b4a, #ff6a2a)",
+      padding: "10px 16px",
+      fontWeight: 600,
+      fontSize: 13.5,
+    },
+    [theme.fn.smallerThan("sm")]: {
+      "&, &:hover": {
+        backgroundImage: "none",
+        color: ui.accent2,
+        padding: theme.spacing.md,
+        fontSize: 15,
+      },
     },
   },
 }));
@@ -150,16 +161,11 @@ const Header = () => {
     });
   }
 
-  if (config.get("general.showHomePage"))
-    unauthenticatedLinks.unshift({
-      link: "/",
-      label: t("navbar.home"),
-    });
-
   if (config.get("share.allowRegistration"))
     unauthenticatedLinks.push({
       link: "/auth/signUp",
       label: t("navbar.signup"),
+      primary: true,
     });
 
   const { classes, cx } = useStyles();
@@ -168,7 +174,7 @@ const Header = () => {
       {(user ? authenticatedLinks : unauthenticatedLinks).map((link, i) => {
         if (link.component) {
           return (
-            <Box pl={5} py={15} key={i}>
+            <Box px={6} py={12} key={i}>
               {link.component}
             </Box>
           );
@@ -177,9 +183,10 @@ const Header = () => {
           <Link
             key={link.label}
             href={link.link ?? ""}
-            onClick={() => toggleOpened.toggle()}
+            onClick={() => toggleOpened.close()}
             className={cx(classes.link, {
-              [classes.linkActive]: currentRoute == link.link,
+              [classes.linkActive]: currentRoute == link.link && !link.primary,
+              [classes.primary]: link.primary,
             })}
           >
             {link.label}
@@ -189,27 +196,24 @@ const Header = () => {
     </>
   );
   return (
-    <MantineHeader height={HEADER_HEIGHT} mb={40} className={classes.root}>
-      <Container className={classes.header}>
-        <Link href="/" passHref>
-          <Group>
-            <Logo height={35} width={35} />
-            <Text weight={600}>{config.get("general.appName")}</Text>
-          </Group>
-        </Link>
-        <Group spacing={5} className={classes.links}>
-          <Group>{items} </Group>
+    <MantineHeader height={HEADER_HEIGHT} mb={36} className={classes.root}>
+      <Container size={1040} px="md" className={classes.header}>
+        <Brand />
+        <Group spacing={6} className={classes.links}>
+          {items}
         </Group>
         <Burger
           opened={opened}
           onClick={() => toggleOpened.toggle()}
           className={classes.burger}
           size="sm"
+          color={ui.muted}
+          aria-label="Menu"
         />
         <Transition transition="pop-top-right" duration={200} mounted={opened}>
           {(styles) => (
             <Paper className={classes.dropdown} withBorder style={styles}>
-              <Stack spacing={0}> {items}</Stack>
+              <Stack spacing={0}>{items}</Stack>
             </Paper>
           )}
         </Transition>

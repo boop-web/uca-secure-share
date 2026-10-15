@@ -5,11 +5,10 @@ import {
   MantineProvider,
   Stack,
 } from "@mantine/core";
-import { useColorScheme } from "@mantine/hooks";
 import { ModalsProvider } from "@mantine/modals";
 import { Notifications } from "@mantine/notifications";
 import axios from "axios";
-import { getCookie, setCookie } from "cookies-next";
+import { getCookie } from "cookies-next";
 import moment from "moment";
 import "moment/min/locales";
 import { GetServerSidePropsContext } from "next";
@@ -30,16 +29,15 @@ import globalStyle from "../styles/mantine.style";
 import Config from "../types/config.type";
 import { CurrentUser } from "../types/user.type";
 import i18nUtil from "../utils/i18n.util";
-import userPreferences from "../utils/userPreferences.util";
 import Footer from "../components/footer/Footer";
 
 const excludeDefaultLayoutRoutes = ["/admin/config/[category]"];
 
 function App({ Component, pageProps }: AppProps) {
-  const systemTheme = useColorScheme(pageProps.colorScheme);
   const router = useRouter();
 
-  const [colorScheme, setColorScheme] = useState<ColorScheme>(systemTheme);
+  // The UCA look is dark only (matches the other ucagg.de sites).
+  const colorScheme: ColorScheme = "dark";
 
   const [user, setUser] = useState<CurrentUser | null>(pageProps.user);
   const [route, setRoute] = useState<string>(pageProps.route);
@@ -70,21 +68,7 @@ function App({ Component, pageProps }: AppProps) {
     }
   }, []);
 
-  useEffect(() => {
-    const colorScheme =
-      userPreferences.get("colorScheme") == "system"
-        ? systemTheme
-        : userPreferences.get("colorScheme");
-
-    toggleColorScheme(colorScheme);
-  }, [systemTheme]);
-
-  const toggleColorScheme = (value: ColorScheme) => {
-    setColorScheme(value ?? "light");
-    setCookie("mantine-color-scheme", value ?? "light", {
-      sameSite: "lax",
-    });
-  };
+  const toggleColorScheme = () => {};
 
   const language = useRef(pageProps.language);
   moment.locale(language.current);
@@ -94,7 +78,7 @@ function App({ Component, pageProps }: AppProps) {
       <Head>
         <meta
           name="viewport"
-          content="minimum-scale=1, initial-scale=1, width=device-width, user-scalable=no"
+          content="initial-scale=1, width=device-width, viewport-fit=cover"
         />
       </Head>
       <IntlProvider
@@ -142,7 +126,7 @@ function App({ Component, pageProps }: AppProps) {
                       >
                         <div>
                           <Header />
-                          <Container>
+                          <Container size={1040} px="md">
                             <Component {...pageProps} />
                           </Container>
                         </div>
@@ -171,8 +155,7 @@ App.getInitialProps = async ({ ctx }: { ctx: GetServerSidePropsContext }) => {
     language?: string;
   } = {
     route: ctx.resolvedUrl,
-    colorScheme:
-      (getCookie("mantine-color-scheme", ctx) as ColorScheme) ?? "light",
+    colorScheme: "dark",
   };
 
   if (ctx.req) {

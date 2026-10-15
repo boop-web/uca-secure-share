@@ -35,7 +35,6 @@ const categories = [
   { name: "S3", icon: <TbBucket /> },
   { name: "Legal", icon: <TbScale /> },
   { name: "Cache", icon: <TbServerBolt /> },
-  { name: "HomePage", icon: <TbHome /> },
 ];
 
 const useStyles = createStyles((theme) => ({
@@ -105,10 +104,23 @@ const ConfigurationNavBar = ({
               </Group>
             </Box>
           ))}
+          <Box
+            p="xs"
+            component={Link}
+            onClick={() => setIsMobileNavBarOpened(false)}
+            href="/admin/homepage"
+          >
+            <Group>
+              <ThemeIcon variant="light">
+                <TbHome />
+              </ThemeIcon>
+              <Text size="sm">Home page</Text>
+            </Group>
+          </Box>
         </Stack>
       </Navbar.Section>
       <MediaQuery largerThan="sm" styles={{ display: "none" }}>
-        <Button mt="xl" variant="light" component={Link} href="/admin">
+        <Button mt="xl" variant="default" component={Link} href="/admin">
           <FormattedMessage id="common.button.go-back" />
         </Button>
       </MediaQuery>

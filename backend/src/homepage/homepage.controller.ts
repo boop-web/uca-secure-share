@@ -1,23 +1,14 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Put,
-  UseGuards,
-  Request,
-  ForbiddenException,
-} from "@nestjs/common";
-import { HomepageService } from "./homepage.service";
-import { HomepageDto } from "./dto/homepage.dto";
+import { Body, Controller, Get, Put, UseGuards } from "@nestjs/common";
+import { User } from "@prisma/client";
+import { GetUser } from "src/auth/decorator/getUser.decorator";
+import { AdministratorGuard } from "src/auth/guard/isAdmin.guard";
 import { JwtGuard } from "src/auth/guard/jwt.guard";
-import { UserService } from "src/user/user.service";
+import { HomepageDto } from "./dto/homepage.dto";
+import { HomepageService } from "./homepage.service";
 
 @Controller("homepage")
 export class HomepageController {
-  constructor(
-    private homepageService: HomepageService,
-    private userService: UserService,
-  ) {}
+  constructor(private homepageService: HomepageService) {}
 
   @Get()
   async getHomePage() {
@@ -25,12 +16,8 @@ export class HomepageController {
   }
 
   @Put()
-  @UseGuards(JwtGuard)
-  async updateHomePage(@Body() dto: HomepageDto, @Request() req: any) {
-    const user = await this.userService.get(req.user.sub);
-    if (!user.isAdmin) {
-      throw new ForbiddenException("Admin access required");
-    }
+  @UseGuards(JwtGuard, AdministratorGuard)
+  async updateHomePage(@Body() dto: HomepageDto, @GetUser() user: User) {
     return this.homepageService.updateHomePage(dto, user.id);
   }
 }

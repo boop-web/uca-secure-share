@@ -1,5 +1,18 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "src/prisma/prisma.service";
+import { HomepageDto } from "./dto/homepage.dto";
+
+const HOMEPAGE_FIELDS: (keyof HomepageDto)[] = [
+  "title",
+  "description",
+  "bullet1Name",
+  "bullet1Desc",
+  "bullet2Name",
+  "bullet2Desc",
+  "bullet3Name",
+  "bullet3Desc",
+  "buttonText",
+];
 
 @Injectable()
 export class HomepageService {
@@ -17,7 +30,12 @@ export class HomepageService {
     return homePage;
   }
 
-  async updateHomePage(data: any, userId: string) {
+  async updateHomePage(dto: HomepageDto, userId: string) {
+    // only copy the known text fields
+    const data: HomepageDto = {};
+    for (const key of HOMEPAGE_FIELDS) {
+      if (typeof dto[key] === "string") data[key] = dto[key];
+    }
     let homePage = await this.prisma.homePage.findFirst();
     if (!homePage) {
       homePage = await this.prisma.homePage.create({

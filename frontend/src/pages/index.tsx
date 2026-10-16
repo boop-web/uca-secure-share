@@ -110,7 +110,7 @@ const icons = [
 
 export default function Home() {
   const { classes } = useStyles();
-  const { user, refreshUser } = useUser();
+  const { user } = useUser();
   const router = useRouter();
   const config = useConfig();
   const [content, setContent] = useState(HOMEPAGE_DEFAULTS);
@@ -124,9 +124,6 @@ export default function Home() {
       router.replace("/upload");
       return;
     }
-    refreshUser().then((u) => {
-      if (u) router.replace("/upload");
-    });
     homepageService
       .get()
       .then((data) => setContent(resolveHomepage(data)))

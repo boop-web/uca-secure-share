@@ -3,9 +3,9 @@ import { HomepageDto } from "../types/homepage.type";
 // Built-in homepage copy. The admin editor (/admin/homepage) can override
 // every field; until an admin has saved once, these are shown.
 export const HOMEPAGE_DEFAULTS: Required<HomepageDto> = {
-  title: "Send files with a link.\nPrivate and free.",
+  title: "Send files with a link.\nSecure, private and free.",
   description:
-    "Upload a file, get a link, send it to anyone. Set an expiry, a password or a download limit. No account needed, no paywall.",
+    "Secure file sharing without the hassle: upload a file, get a link, send it to anyone. Set an expiry, a password or a download limit. No account needed, no paywall.",
   bullet1Name: "Encrypted transfer",
   bullet1Desc:
     "Files travel over TLS to our own server and can only be opened with the share link.",

@@ -30,6 +30,7 @@ import Config from "../types/config.type";
 import { CurrentUser } from "../types/user.type";
 import i18nUtil from "../utils/i18n.util";
 import Footer from "../components/footer/Footer";
+import { isIndexable } from "../utils/seo.util";
 
 const excludeDefaultLayoutRoutes = ["/admin/config/[category]"];
 
@@ -80,6 +81,10 @@ function App({ Component, pageProps }: AppProps) {
           name="viewport"
           content="initial-scale=1, width=device-width, viewport-fit=cover"
         />
+        {/* only the public pages may be indexed; shares, uploads, accounts and admin never */}
+        {!isIndexable(router.pathname) && (
+          <meta name="robots" content="noindex, nofollow" key="robots" />
+        )}
       </Head>
       <IntlProvider
         messages={i18nUtil.getLocaleByCode(language.current)?.messages}

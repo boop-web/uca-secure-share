@@ -1,4 +1,7 @@
 :3000 {
+	# The API (incl. file downloads) is never indexed
+	header /api/* X-Robots-Tag "noindex, nofollow"
+
 	# Reverse proxy for /api
 	reverse_proxy /api/* http://localhost:{$BACKEND_PORT:8080}
 

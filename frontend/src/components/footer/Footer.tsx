@@ -55,10 +55,19 @@ const Footer = () => {
       {config.get("legal.enabled") && hasPrivacy && (
         <a href={privacyUrl}>{t("privacy.title")}</a>
       )}
-      <a href="https://ai.ucagg.de" rel="noopener">
-        UCA assistant
+      <a href="https://ucagg.de/" rel="noopener">
+        More apps from UCA
       </a>
-      <a href="https://audio.ucagg.de" rel="noopener">
+      <a href="https://ai.ucagg.de/" rel="noopener">
+        UCA AI voice assistant for Windows
+      </a>
+      <a href="https://mesh.ucagg.de/" rel="noopener">
+        UCA Mesh remote support
+      </a>
+      <a href="https://pdf.ucagg.de/" rel="noopener">
+        UCA PDF Editor
+      </a>
+      <a href="https://audio.ucagg.de/" rel="noopener">
         UCA Audio
       </a>
     </footer>

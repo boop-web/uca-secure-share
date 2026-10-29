@@ -27,7 +27,6 @@ export default class _Document extends Document {
           <link rel="alternate icon" href="/img/favicon.ico" sizes="any" />
           <link rel="apple-touch-icon" href="/img/apple-touch-icon.png" />
 
-          <meta name="robots" content="noindex" />
           <meta name="theme-color" content="#0d0907" />
           <meta name="color-scheme" content="dark" />
         </Head>

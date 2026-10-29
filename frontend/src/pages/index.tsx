@@ -1,4 +1,5 @@
 import { Button, createStyles, keyframes } from "@mantine/core";
+import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useRef, useState } from "react";
@@ -8,7 +9,9 @@ import useConfig from "../hooks/config.hook";
 import useUser from "../hooks/user.hook";
 import homepageService from "../services/homepage.service";
 import { ui } from "../styles/mantine.style";
+import { byteToUnitAndSize } from "../utils/fileSize.util";
 import { HOMEPAGE_DEFAULTS, resolveHomepage } from "../utils/homepage.util";
+import { siteUrl } from "../utils/seo.util";
 
 const rise = keyframes({ from: { opacity: 0, transform: "translateY(14px)" }, to: { opacity: 1, transform: "none" } });
 const drift = keyframes({
@@ -162,6 +165,10 @@ const useStyles = createStyles((theme) => ({
       strokeLinejoin: "round",
     },
   },
+  faq: {
+    margin: "10px 0 34px",
+    "& > h2": { textAlign: "center", fontSize: "clamp(24px, 3.6vw, 32px)", fontWeight: 700, margin: "0 0 20px", color: ui.text },
+  },
   note: {
     background: ui.panel,
     border: `1px solid ${ui.line}`,
@@ -190,12 +197,32 @@ const icons = [
   </svg>,
 ];
 
-const STEPS: [string, string, string, string][] = [
-  ["/home/step-upload.webp", "Drop your files", "Drag anything onto the page - photos, documents, music - up to 5 GB in total. No account needed.", "The upload page with three files ready to share"],
-  ["/home/step-create.webp", "Choose how it lives", "Pick the link, how long it stays online, a password or a download limit, and who should get it by email.", "The Create Share dialog with link, expiry and options"],
-  ["/home/step-ready.webp", "Send the link", "Your link is ready in seconds. Copy it and send it any way you like.", "The Share ready dialog with the link to copy"],
-  ["/home/step-download.webp", "They download", "One click per file or everything at once. PDFs, pictures and audio can be previewed first.", "A shared folder with three files to download"],
+// [image, width, height, title, text, alt]; "{max}" is the configured share size limit
+const STEPS: [string, number, number, string, string, string][] = [
+  ["/home/step-upload.webp", 2512, 1536, "Drop your files", "Drag anything onto the page - photos, documents, music - up to {max} in total. No account needed.", "The upload page with three files ready to share"],
+  ["/home/step-create.webp", 992, 1322, "Choose how it lives", "Pick the link, how long it stays online, a password or a download limit, and who should get it by email.", "The Create Share dialog with link, expiry and options"],
+  ["/home/step-ready.webp", 992, 548, "Send the link", "Your link is ready in seconds. Copy it and send it any way you like.", "The Share ready dialog with the link to copy"],
+  ["/home/step-download.webp", 2560, 740, "They download", "One click per file or everything at once. PDFs, pictures and audio can be previewed first.", "A shared folder with three files to download"],
 ];
+
+// Landing sections for what people search for; honest about what the
+// service does (TLS to our own server, not end-to-end encryption).
+const USES: [string, string][] = [
+  ["Send large files free", "Share videos, photo folders, project files or backups up to {max} per share - free, with no subscription and no paywall. Recipients download straight from the link, file by file or all at once."],
+  ["Share files with a link", "Every upload becomes one file transfer link you can paste into a chat, an email or a text message. Optionally we email the link to your recipients for you."],
+  ["Secure file sharing you control", "Files travel encrypted over HTTPS to our own server and can only be opened with the link. Add a password, an expiry date or a download limit; expired shares are deleted automatically."],
+];
+
+const faqItems = (max: string, needsAccount: boolean): [string, string][] => [
+  ["Is UCA Share free?", "Yes. Sending files is free: no subscription, no paywall, no ads. UCA Share is part of the UCA family of apps."],
+  ["How large can my files be?", `Up to ${max} per share. You can add as many files to a share as you like within that limit.`],
+  ["Do I need an account?", needsAccount ? "Yes, a free account is needed to upload. Recipients never need an account - the link is enough." : "No. Upload your files and send the link. Recipients do not need an account either. A free account lets you see and manage your shares later."],
+  ["Are my files encrypted?", "Files are encrypted in transit (HTTPS/TLS) to our own server and are only reachable through the share link, which you can protect with a password. They are not end-to-end encrypted, so for highly sensitive data, encrypt the files first (for example in a password-protected archive)."],
+  ["How long do shared files stay online?", "You decide when you create the share: pick an expiry date or a download limit. When a share expires, its files are removed automatically."],
+  ["Where are the files stored?", "On UCA's own server in the USA, not on a third-party cloud. Shared files are never listed publicly or in search engines."],
+];
+
+const fill = (text: string, max: string) => text.replace(/\{max\}/g, max);
 
 // adds .in to every [data-reveal] element once it scrolls into view
 function useReveal() {
@@ -233,6 +260,39 @@ export default function Home() {
       .catch(() => {});
   }, []);
 
+  // the share size limit and whether uploads need an account come from the config
+  let max = "5 GB";
+  let needsAccount = false;
+  try {
+    const { size, unit } = byteToUnitAndSize(config.get("share.maxSize"));
+    if (size) max = `${size} ${unit}`;
+    needsAccount = config.get("share.allowUnauthenticatedShares") === false;
+  } catch {
+    /* keep the defaults */
+  }
+  const faq = faqItems(max, needsAccount);
+  const base = siteUrl(config.get("general.appUrl"));
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      name: "UCA Share",
+      description: `Secure file sharing in the browser: send files up to ${max} with a link, with an optional password, expiry date and download limit. Free, no paywall.`,
+      url: base + "/",
+      image: base + "/og.png",
+      applicationCategory: "UtilitiesApplication",
+      operatingSystem: "Any (web browser)",
+      browserRequirements: "Requires JavaScript and a modern web browser",
+      offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
+      publisher: { "@type": "Organization", name: "UCA", url: "https://ucagg.de/" },
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: faq.map(([q, a]) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a } })),
+    },
+  ];
+
   const [titleMain, ...titleRest] = content.title.split("\n");
   const cards = [
     [content.bullet1Name, content.bullet1Desc],
@@ -242,10 +302,21 @@ export default function Home() {
 
   return (
     <div ref={root}>
-      <Meta title="UCA Share - private file sharing" fullTitle />
+      <Meta
+        title="Secure File Sharing: Send Large Files Free | UCA Share"
+        description={`Send files up to ${max} with a secure link: set an expiry, a password or a download limit. Free file sharing with no paywall and no ads.`}
+        fullTitle
+      />
+      <Head>
+        <script
+          type="application/ld+json"
+          key="ld-json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
+        />
+      </Head>
       <section className={classes.hero}>
         <span className={classes.glow} aria-hidden="true" />
-        <p className={classes.kicker}>Private file sharing</p>
+        <p className={classes.kicker}>Secure file sharing</p>
         <h1 className={classes.title}>
           {titleMain}
           {titleRest.length > 0 && (
@@ -287,17 +358,42 @@ export default function Home() {
           <p className={classes.kicker}>How it works</p>
           <h2>From your PC to theirs in four steps.</h2>
         </div>
-        {STEPS.map(([src, title, text, alt], i) => (
+        {STEPS.map(([src, width, height, title, text, alt], i) => (
           <div className={classes.step} key={src}>
             <figure className={cx(classes.shot, classes.reveal)} data-reveal>
-              <img src={src} alt={alt} loading="lazy" decoding="async" />
+              <img src={src} alt={alt} width={width} height={height} loading="lazy" decoding="async" />
             </figure>
             <div className={cx(classes.stepText, classes.reveal)} data-reveal style={{ transitionDelay: ".1s" }}>
               <b>{i + 1}</b>
               <h3>{title}</h3>
-              <p>{text}</p>
+              <p>{fill(text, max)}</p>
             </div>
           </div>
+        ))}
+      </section>
+
+      <section className={classes.how}>
+        <div className={cx(classes.howHead, classes.reveal)} data-reveal>
+          <p className={classes.kicker}>Why UCA Share</p>
+          <h2>Free, private file transfer - without the clutter.</h2>
+        </div>
+        <div className={classes.grid}>
+          {USES.map(([name, text], i) => (
+            <article className={cx(classes.card, classes.reveal)} data-reveal key={name} style={{ transitionDelay: `${i * 0.08}s` }}>
+              <h3>{name}</h3>
+              <p>{fill(text, max)}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className={classes.faq} id="faq">
+        <h2 className={classes.reveal} data-reveal>Questions</h2>
+        {faq.map(([q, a]) => (
+          <article className={cx(classes.note, classes.reveal)} data-reveal key={q}>
+            <h3>{q}</h3>
+            <p>{a}</p>
+          </article>
         ))}
       </section>
 

@@ -11,7 +11,10 @@ const Imprint = () => {
   const config = useConfig();
   return (
     <>
-      <Meta title={t("imprint.title")} />
+      <Meta
+        title={t("imprint.title")}
+        description="Imprint (legal notice) of UCA Share, the free and secure file sharing service at share.ucagg.de."
+      />
       <Title mb={30} order={1}>
         <FormattedMessage id="imprint.title" />
       </Title>

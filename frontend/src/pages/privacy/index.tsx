@@ -11,7 +11,10 @@ const PrivacyPolicy = () => {
   const config = useConfig();
   return (
     <>
-      <Meta title={t("privacy.title")} />
+      <Meta
+        title={t("privacy.title")}
+        description="Privacy policy of UCA Share: which data is processed when you share files with a link, how long it is kept and your rights."
+      />
       <Title mb={30} order={1}>
         <FormattedMessage id="privacy.title" />
       </Title>

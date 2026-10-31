@@ -20,8 +20,8 @@ const drift = keyframes({
   "50%": { transform: "translate(30px, -18px) scale(1.12)" },
 });
 const iconPulse = keyframes({
-  "0%, 100%": { boxShadow: "0 0 0 0 rgba(145,132,217,0)" },
-  "50%": { boxShadow: "0 0 18px 2px rgba(145,132,217,.28)" },
+  "0%, 100%": { boxShadow: "0 0 0 0 rgba(var(--uca-accent-rgb, 145, 132, 217), 0)" },
+  "50%": { boxShadow: "0 0 18px 2px rgba(var(--uca-accent-rgb, 145, 132, 217), .28)" },
 });
 
 const useStyles = createStyles((theme) => ({
@@ -44,7 +44,7 @@ const useStyles = createStyles((theme) => ({
     width: 420,
     height: 420,
     borderRadius: "50%",
-    background: "radial-gradient(circle, rgba(145,132,217,.14), rgba(145,132,217,0) 68%)",
+    background: "radial-gradient(circle, rgba(var(--uca-accent-rgb, 145, 132, 217), .14), rgba(var(--uca-accent-rgb, 145, 132, 217), 0) 68%)",
     top: -120,
     left: "50%",
     marginLeft: -210,
@@ -86,9 +86,9 @@ const useStyles = createStyles((theme) => ({
     overflow: "hidden",
     border: `1px solid ${ui.line}`,
     background: `linear-gradient(180deg, ${ui.panel2}, ${ui.panel})`,
-    boxShadow: "0 24px 60px -30px rgba(0,0,0,1), 0 0 0 1px rgba(145,132,217,.05)",
+    boxShadow: "0 24px 60px -30px rgba(0,0,0,1), 0 0 0 1px rgba(var(--uca-accent-rgb, 145, 132, 217), .05)",
     transition: "transform .4s cubic-bezier(.2,.7,.2,1), box-shadow .4s, border-color .3s",
-    "&:hover": { transform: "translateY(-4px)", borderColor: ui.lineStrong, boxShadow: "0 30px 70px -30px rgba(0,0,0,1), 0 0 34px -6px rgba(145,132,217,.28)" },
+    "&:hover": { transform: "translateY(-4px)", borderColor: ui.lineStrong, boxShadow: "0 30px 70px -30px rgba(0,0,0,1), 0 0 34px -6px rgba(var(--uca-accent-rgb, 145, 132, 217), .28)" },
     display: "grid",
     placeItems: "center",
     "& img": { display: "block", maxWidth: "100%", maxHeight: 420, width: "auto", height: "auto" },
@@ -113,7 +113,7 @@ const useStyles = createStyles((theme) => ({
     margin: "0 0 18px",
     color: ui.text,
     overflowWrap: "break-word",
-    "& span": { color: ui.accent2, textShadow: "0 0 32px rgba(145,132,217,.35)" },
+    "& span": { color: ui.accent2, textShadow: "0 0 32px rgba(var(--uca-accent-rgb, 145, 132, 217), .35)" },
   },
   lead: {
     maxWidth: 620,
@@ -146,7 +146,7 @@ const useStyles = createStyles((theme) => ({
     boxShadow: "0 1px 0 rgba(255,255,255,.03) inset, 0 20px 40px -30px rgba(0,0,0,.9)",
     transition: "transform .3s cubic-bezier(.2,.7,.2,1), border-color .3s, box-shadow .3s",
     "&::after": { content: '""', position: "absolute", inset: 0, borderRadius: "inherit", background: `radial-gradient(160px 80px at 20% 0%, ${ui.soft}, transparent 70%)`, opacity: 0, transition: "opacity .3s", pointerEvents: "none" },
-    "&:hover": { transform: "translateY(-3px)", borderColor: ui.lineStrong, boxShadow: "0 18px 40px -24px rgba(0,0,0,1), 0 0 0 1px rgba(145,132,217,.08)" },
+    "&:hover": { transform: "translateY(-3px)", borderColor: ui.lineStrong, boxShadow: "0 18px 40px -24px rgba(0,0,0,1), 0 0 0 1px rgba(var(--uca-accent-rgb, 145, 132, 217), .08)" },
     "&:hover::after": { opacity: 1 },
     "& h3": { margin: "0 0 6px", fontSize: 15.5, fontWeight: 600, letterSpacing: "-.01em" },
     "& p": { margin: 0, color: ui.muted, fontSize: 14, lineHeight: 1.55 },
@@ -159,7 +159,7 @@ const useStyles = createStyles((theme) => ({
     placeItems: "center",
     marginBottom: 12,
     background: ui.soft,
-    border: "1px solid rgba(145,132,217,.3)",
+    border: "1px solid rgba(var(--uca-accent-rgb, 145, 132, 217), .3)",
     animation: `${iconPulse} 3.6s ease-in-out infinite`,
     "@media (prefers-reduced-motion: reduce)": { animation: "none" },
     "& svg": {

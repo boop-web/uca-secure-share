@@ -3,29 +3,41 @@ import { MantineThemeOverride, Tuple } from "@mantine/core";
 // UCA look: Nocturne, the system UCA ID (ucagg.de/account) and UCA TV use - a near-neutral blue-grey ground, Inter at
 // medium weight, 8px radii, and ONE blurple accent used as a line and a glow, never a flood. Primary buttons are
 // outlined. The token names stay as before so every page picks the look up from here.
+// uca-theme-v1 (ucagg-site docs/uca-theme-v1.md): every colour reads --uca-* from https://ucagg.de/theme.css (linked
+// in _document.tsx), so the owner's theme on the Command Deck reaches Share on its next load. The fallbacks are exactly
+// Nocturne, so the page looks the same while theme.css is missing or down. Mantine's palettes (computed in JS) keep the
+// Nocturne hex values below.
+export const hex = {
+  bg: "#161826", bg2: "#1a1c2a", surface: "#1e2030", surface2: "#232532", line: "#2c2f3c", line2: "#3f424d",
+  text: "#e9e9ed", muted: "#9397ab", dim: "#75798c", accent: "#9184d9", accentLight: "#b5abfc", accentText: "#d2cefd",
+  accent800: "#423a6a", accentDeep: "#2b2741", ok: "#7fd6a4", warn: "#e8c27a", danger: "#f08a96",
+};
+const v = (name: string, fallback: string) => `var(--uca-${name}, ${fallback})`;
+/** the theme accent with an alpha, e.g. accentA(0.3) */
+export const accentA = (alpha: number) => `rgba(var(--uca-accent-rgb, 145, 132, 217), ${alpha})`;
 export const ui = {
-  bg: "#161826",
-  bgSoft: "#1a1c2a",
-  panel: "#1e2030",
-  panel2: "#232532",
-  line: "#2c2f3c",
-  lineStrong: "#3f424d",
-  text: "#e9e9ed",
-  muted: "#9397ab",
-  faint: "#75798c",
-  accent: "#9184d9",
-  accent2: "#b5abfc",
-  accent300: "#d2cefd",
-  accent800: "#423a6a",
-  accent900: "#2b2741",
-  glow: "rgba(145,132,217,.42)",
-  soft: "rgba(145,132,217,.12)",
-  ok: "#7fd6a4",
-  warn: "#e8c27a",
-  danger: "#f08a96",
-  onAccent: "#161826",
-  orbRgb: "145,132,217",
-  font: 'Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+  bg: v("bg", hex.bg),
+  bgSoft: v("bg2", hex.bg2),
+  panel: v("surface", hex.surface),
+  panel2: v("surface2", hex.surface2),
+  line: v("line", hex.line),
+  lineStrong: v("line2", hex.line2),
+  text: v("text", hex.text),
+  muted: v("muted", hex.muted),
+  faint: v("dim", hex.dim),
+  accent: v("accent", hex.accent),
+  accent2: v("accent-light", hex.accentLight),
+  accent300: v("accent-text", hex.accentText),
+  accent800: hex.accent800,
+  accent900: v("accent-deep", hex.accentDeep),
+  glow: accentA(0.42),
+  soft: accentA(0.12),
+  ok: v("ok", hex.ok),
+  warn: v("warn", hex.warn),
+  danger: v("danger", hex.danger),
+  onAccent: v("bg", hex.bg),
+  orbRgb: "var(--uca-accent-rgb, 145, 132, 217)",
+  font: 'var(--uca-font, Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif)',
   mono: '"JetBrains Mono", ui-monospace, SFMono-Regular, Consolas, monospace',
   ease: "cubic-bezier(.2,.7,.2,1)",
 };
@@ -34,29 +46,29 @@ export const ui = {
 const nocturne: Tuple<string, 10> = [
   "#f1effe",
   "#e2defd",
-  ui.accent300,
-  ui.accent2,
+  hex.accentText,
+  hex.accentLight,
   "#a397eb",
-  ui.accent,
+  hex.accent,
   "#7a6dc4",
   "#5f549c",
-  ui.accent800,
-  ui.accent900,
+  hex.accent800,
+  hex.accentDeep,
 ];
 
 // Mantine's dark palette in Nocturne's surface tones. Index meaning in Mantine v6:
 // 0 text, 1-2 dimmed text, 3 placeholders/icons, 4 borders, 5 hover, 6 inputs, 7 body/paper, 8-9 deeper surfaces.
 const dark: Tuple<string, 10> = [
-  ui.text,
+  hex.text,
   "#c9cad6",
-  ui.muted,
-  ui.faint,
-  ui.lineStrong,
+  hex.muted,
+  hex.dim,
+  hex.line2,
   "#2a2c3a",
-  ui.panel2,
-  ui.panel,
-  ui.bgSoft,
-  ui.bg,
+  hex.surface2,
+  hex.surface,
+  hex.bg2,
+  hex.bg,
 ];
 
 const card = `linear-gradient(180deg, ${ui.panel2}, ${ui.panel})`;
@@ -68,7 +80,7 @@ const theme = <MantineThemeOverride>{
   primaryColor: "nocturne",
   primaryShade: 5,
   white: "#ffffff",
-  black: ui.bg,
+  black: hex.bg,
   fontFamily: ui.font,
   fontFamilyMonospace: ui.mono,
   defaultRadius: "sm",
@@ -135,7 +147,7 @@ const theme = <MantineThemeOverride>{
               ? {
                   backgroundColor: ui.soft,
                   color: ui.accent300,
-                  "&:hover:not([data-disabled])": { backgroundColor: "rgba(145,132,217,.2)" },
+                  "&:hover:not([data-disabled])": { backgroundColor: "rgba(var(--uca-accent-rgb, 145, 132, 217), .2)" },
                 }
               : {}),
           },
@@ -260,7 +272,7 @@ const theme = <MantineThemeOverride>{
           },
           "& tbody tr td": { borderTopColor: ui.line },
           "& tbody tr": { transition: "background-color .2s" },
-          "& tbody tr:hover": { backgroundColor: "rgba(145,132,217,.04)" },
+          "& tbody tr:hover": { backgroundColor: "rgba(var(--uca-accent-rgb, 145, 132, 217), .04)" },
         },
       }),
     },
@@ -272,9 +284,12 @@ const theme = <MantineThemeOverride>{
     // alerts: a tinted line on the dark ground, never a coloured flood
     Alert: {
       styles: (t, params: { color?: string }) => {
+        const own = !params.color || params.color === "nocturne";
         const c = t.fn.themeColor(params.color || "nocturne", 5);
         return {
-          root: { backgroundColor: t.fn.rgba(c, 0.07), border: `1px solid ${t.fn.rgba(c, 0.35)}` },
+          root: own
+            ? { backgroundColor: accentA(0.07), border: `1px solid ${accentA(0.35)}` }
+            : { backgroundColor: t.fn.rgba(c, 0.07), border: `1px solid ${t.fn.rgba(c, 0.35)}` },
           title: { fontWeight: 500, color: ui.text },
           message: { color: ui.muted },
         };
@@ -298,7 +313,7 @@ const theme = <MantineThemeOverride>{
     Header: {
       styles: () => ({
         root: {
-          backgroundColor: "rgba(22, 24, 38, 0.8)",
+          backgroundColor: "rgba(var(--uca-bg-rgb, 22, 24, 38), 0.8)",
           backdropFilter: "blur(12px)",
           borderBottomColor: ui.line,
         },

@@ -7,8 +7,8 @@ import { ui } from "../../styles/mantine.style";
 
 const dash = keyframes({ to: { strokeDashoffset: -40 } });
 const chipPulse = keyframes({
-  "0%, 44%, 100%": { transform: "scale(1)", filter: "drop-shadow(0 0 0 rgba(145,132,217,0))" },
-  "52%": { transform: "scale(1.08)", filter: "drop-shadow(0 0 14px rgba(145,132,217,.75))" },
+  "0%, 44%, 100%": { transform: "scale(1)", filter: "drop-shadow(0 0 0 rgba(var(--uca-accent-rgb, 145, 132, 217), 0))" },
+  "52%": { transform: "scale(1.08)", filter: "drop-shadow(0 0 14px rgba(var(--uca-accent-rgb, 145, 132, 217), .75))" },
 });
 const ring = keyframes({
   "0%, 88%": { opacity: 0, transform: "scale(.6)" },
@@ -38,9 +38,9 @@ const useStyles = createStyles(() => ({
     display: "block",
     overflow: "visible",
     "& .stroke": { fill: "none", stroke: ui.accent, strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
-    "& .soft": { fill: "rgba(145,132,217,.08)", stroke: "rgba(145,132,217,.45)", strokeWidth: 1.5 },
+    "& .soft": { fill: "rgba(var(--uca-accent-rgb, 145, 132, 217), .08)", stroke: "rgba(var(--uca-accent-rgb, 145, 132, 217), .45)", strokeWidth: 1.5 },
     "& .dev": { fill: ui.panel, stroke: ui.lineStrong, strokeWidth: 1.5 },
-    "& .path": { fill: "none", stroke: "rgba(145,132,217,.35)", strokeWidth: 2, strokeDasharray: "4 8", animation: `${dash} 1.6s linear infinite` },
+    "& .path": { fill: "none", stroke: "rgba(var(--uca-accent-rgb, 145, 132, 217), .35)", strokeWidth: 2, strokeDasharray: "4 8", animation: `${dash} 1.6s linear infinite` },
     "& .label": { fill: ui.muted, fontSize: 13, fontFamily: ui.font },
     "& .chip": { transformBox: "fill-box", transformOrigin: "center", animation: `${chipPulse} 4.8s ease-in-out infinite` },
     "& .halo": { animation: `${glow} 4.8s ease-in-out infinite` },
@@ -63,13 +63,13 @@ const Flyer = ({ path, half }: { path: string; half: 0 | 1 }) => {
   const k = half === 0 ? "0;1;1" : "0;0;1";
   const kt = half === 0 ? "0;0.5;1" : "0;0.5;1";
   return (
-    <g opacity="0" style={{ filter: "drop-shadow(0 0 8px rgba(145,132,217,.6))" }}>
+    <g opacity="0" style={{ filter: "drop-shadow(0 0 8px rgba(var(--uca-accent-rgb, 145, 132, 217), .6))" }}>
       <animate attributeName="opacity" dur="4.8s" repeatCount="indefinite" values={o} keyTimes={t} />
       <animateMotion dur="4.8s" repeatCount="indefinite" path={path} keyPoints={k} keyTimes={kt} calcMode="linear" />
       <g transform="translate(-14 -17)">
-        <path d="M3 1h15l7 7v24H3z" fill={ui.panel2} stroke={ui.accent} strokeWidth="2" strokeLinejoin="round" />
-        <path d="M18 1v7h7" fill="none" stroke={ui.accent} strokeWidth="2" strokeLinejoin="round" />
-        <path d="M8 16h12M8 21h12M8 26h8" stroke={ui.accent300} strokeWidth="2" strokeLinecap="round" />
+        <path d="M3 1h15l7 7v24H3z" style={{ fill: ui.panel2, stroke: ui.accent }} strokeWidth="2" strokeLinejoin="round" />
+        <path d="M18 1v7h7" fill="none" style={{ stroke: ui.accent }} strokeWidth="2" strokeLinejoin="round" />
+        <path d="M8 16h12M8 21h12M8 26h8" style={{ stroke: ui.accent300 }} strokeWidth="2" strokeLinecap="round" />
       </g>
     </g>
   );
@@ -86,8 +86,8 @@ export default function ShareScene() {
       <svg className={classes.svg} viewBox="0 0 760 220">
         <defs>
           <radialGradient id="halo" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="rgba(145,132,217,.35)" />
-            <stop offset="100%" stopColor="rgba(145,132,217,0)" />
+            <stop offset="0%" stopColor="rgba(var(--uca-accent-rgb, 145, 132, 217), .35)" />
+            <stop offset="100%" stopColor="rgba(var(--uca-accent-rgb, 145, 132, 217), 0)" />
           </radialGradient>
         </defs>
         <path className="path" d={LEG1} />
@@ -102,9 +102,9 @@ export default function ShareScene() {
         {/* the link */}
         <circle className="halo" cx="380" cy="110" r="70" fill="url(#halo)" />
         <g className="chip">
-          <rect x="318" y="88" width="124" height="44" rx="22" fill={ui.panel2} stroke={ui.accent} strokeWidth="2" />
+          <rect x="318" y="88" width="124" height="44" rx="22" style={{ fill: ui.panel2, stroke: ui.accent }} strokeWidth="2" />
           <path className="stroke" d="M346 114l-3 3a6 6 0 0 1-8.5-8.5l5-5a6 6 0 0 1 8.5 0M354 106l3-3a6 6 0 0 1 8.5 8.5l-5 5a6 6 0 0 1-8.5 0" />
-          <text x="400" y="116" textAnchor="middle" fill={ui.accent300} fontSize="13" fontWeight="500" fontFamily={ui.mono}>/s/link</text>
+          <text x="400" y="116" textAnchor="middle" style={{ fill: ui.accent300 }} fontSize="13" fontWeight="500" fontFamily={ui.mono}>/s/link</text>
         </g>
         <text className="label" x="380" y="190" textAnchor="middle">One link</text>
 

@@ -137,7 +137,7 @@ const useStyles = createStyles((theme) => ({
     font: `500 11px/1 ${ui.mono}`,
     letterSpacing: ".12em",
     transition: "border-color .2s, color .2s, box-shadow .3s",
-    "&:hover": { borderColor: "rgba(145,132,217,.45)", color: ui.accent300, boxShadow: `0 0 20px -10px ${ui.glow}` },
+    "&:hover": { borderColor: "rgba(var(--uca-accent-rgb, 145, 132, 217), .45)", color: ui.accent300, boxShadow: `0 0 20px -10px ${ui.glow}` },
     "& i": {
       width: 14,
       height: 14,

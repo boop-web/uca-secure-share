@@ -28,6 +28,8 @@ export default class _Document extends Document {
           <link rel="apple-touch-icon" href="/img/apple-touch-icon.png" />
 
           <meta name="theme-color" content="#161826" />
+          {/* uca-theme-v1: the owner's colours for every UCA app; the --uca-* fallbacks in the styles are Nocturne */}
+          <link rel="stylesheet" href="https://ucagg.de/theme.css" />
           <link rel="preconnect" href="https://fonts.googleapis.com" />
           <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
           <link

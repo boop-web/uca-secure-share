@@ -20,7 +20,7 @@ const ActionAvatar = () => {
               placeholder: {
                 background: ui.soft,
                 color: ui.accent2,
-                border: "1px solid rgba(145,132,217,.3)",
+                border: "1px solid rgba(var(--uca-accent-rgb, 145, 132, 217), .3)",
                 fontWeight: 600,
                 fontSize: 13,
               },

@@ -22,7 +22,7 @@ const useStyles = createStyles(() => ({
     "&:hover": {
       borderColor: ui.lineStrong,
       transform: "translateY(-2px)",
-      boxShadow: "0 18px 40px -24px rgba(0,0,0,1), 0 0 0 1px rgba(145,132,217,.08)",
+      boxShadow: "0 18px 40px -24px rgba(0,0,0,1), 0 0 0 1px rgba(var(--uca-accent-rgb, 145, 132, 217), .08)",
     },
   },
   icon: {
@@ -34,7 +34,7 @@ const useStyles = createStyles(() => ({
     placeItems: "center",
     color: ui.accent2,
     background: ui.soft,
-    border: "1px solid rgba(145,132,217,.3)",
+    border: "1px solid rgba(var(--uca-accent-rgb, 145, 132, 217), .3)",
   },
 }));
 

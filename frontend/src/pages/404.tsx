@@ -2,6 +2,7 @@ import { Button, Container, createStyles, Group, Title } from "@mantine/core";
 import Link from "next/link";
 import { FormattedMessage } from "react-intl";
 import Meta from "../components/Meta";
+import { ui } from "../styles/mantine.style";
 
 const useStyles = createStyles((theme) => ({
   root: {
@@ -15,9 +16,9 @@ const useStyles = createStyles((theme) => ({
     fontSize: 220,
     lineHeight: 1,
     marginBottom: 20,
-    color: theme.colors.nocturne[3],
+    color: ui.accent2,
     letterSpacing: "-.04em",
-    textShadow: "0 0 60px rgba(145,132,217,.45)",
+    textShadow: "0 0 60px rgba(var(--uca-accent-rgb, 145, 132, 217), .45)",
     opacity: 0.9,
 
     [theme.fn.smallerThan("sm")]: {

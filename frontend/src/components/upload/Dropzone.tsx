@@ -25,13 +25,13 @@ const useStyles = createStyles((theme) => ({
     "&[data-accept]": { boxShadow: `0 0 40px -12px ${ui.glow}` },
     borderWidth: 1.5,
     borderStyle: "dashed",
-    borderColor: "rgba(145,132,217,.45)",
-    backgroundColor: theme.colors.dark[7],
+    borderColor: "rgba(var(--uca-accent-rgb, 145, 132, 217), .45)",
+    backgroundColor: ui.panel,
     paddingTop: 36,
     paddingBottom: 56,
     "&:hover, &[data-accept]": {
-      backgroundColor: "rgba(145,132,217,.06)",
-      borderColor: theme.colors.nocturne[5],
+      backgroundColor: "rgba(var(--uca-accent-rgb, 145, 132, 217), .06)",
+      borderColor: ui.accent,
     },
   },
 

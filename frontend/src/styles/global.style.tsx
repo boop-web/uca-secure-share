@@ -8,7 +8,7 @@ const GlobalStyle = () => {
       styles={() => ({
         ":root": {
           "--orb-rgb": ui.orbRgb,
-          "--orb-light": "210,206,253",
+          "--orb-light": "var(--uca-accent-text-rgb, 210, 206, 253)",
           colorScheme: "dark",
         },
         "html, body": {
@@ -19,7 +19,7 @@ const GlobalStyle = () => {
         body: {
           minHeight: "100vh",
           overflowX: "hidden",
-          background: `radial-gradient(60% 40% at 30% -10%, rgba(145,132,217,.12), transparent 70%), linear-gradient(180deg, #1a1c2c, ${ui.bg} 60%)`,
+          background: `radial-gradient(60% 40% at 30% -10%, rgba(var(--uca-accent-rgb, 145, 132, 217), .12), transparent 70%), linear-gradient(180deg, ${ui.bgSoft}, ${ui.bg} 60%)`,
           backgroundColor: ui.bg,
           backgroundAttachment: "fixed",
           WebkitFontSmoothing: "antialiased",
@@ -35,7 +35,7 @@ const GlobalStyle = () => {
           borderRadius: 6,
         },
         "::selection": {
-          background: "rgba(145,132,217,.3)",
+          background: "rgba(var(--uca-accent-rgb, 145, 132, 217), .3)",
           color: ui.text,
         },
         "*": {

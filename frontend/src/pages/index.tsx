@@ -207,9 +207,9 @@ const icons = [
 // [image, width, height, title, text, alt]; "{max}" is the configured share size limit
 const STEPS: [string, number, number, string, string, string][] = [
   ["/home/step-upload.webp", 2512, 1536, "Drop your files", "Drag anything onto the page - photos, documents, music - up to {max} in total. No account needed.", "The upload page with three files ready to share"],
-  ["/home/step-create.webp", 992, 1322, "Choose how it lives", "Pick the link, how long it stays online, a password or a download limit, and who should get it by email.", "The Create Share dialog with link, expiry and options"],
-  ["/home/step-ready.webp", 992, 548, "Send the link", "Your link is ready in seconds. Copy it and send it any way you like.", "The Share ready dialog with the link to copy"],
-  ["/home/step-download.webp", 2560, 740, "They download", "One click per file or everything at once. PDFs, pictures and audio can be previewed first.", "A shared folder with three files to download"],
+  ["/home/step-create.webp", 880, 1013, "Choose how it lives", "Pick the link, how long it stays online, a password or a download limit, and who should get it by email.", "The Create Share dialog with link, expiry and options"],
+  ["/home/step-ready.webp", 880, 439, "Send the link", "Your link is ready in seconds. Copy it and send it any way you like.", "The Share ready dialog with the link to copy"],
+  ["/home/step-download.webp", 2080, 543, "They download", "One click per file or everything at once. PDFs, pictures and audio can be previewed first.", "A shared folder with three files to download"],
 ];
 
 // Landing sections for what people search for; honest about what the

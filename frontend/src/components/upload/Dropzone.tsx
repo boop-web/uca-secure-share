@@ -1,4 +1,9 @@
-import { Button, Center, createStyles, Group, Text } from "@mantine/core";
+import { Button, Center, createStyles, Group, keyframes, Text } from "@mantine/core";
+import { ui } from "../../styles/mantine.style";
+
+// the cloud floats and its glow breathes (transform + opacity only: cheap)
+const float = keyframes({ "0%, 100%": { transform: "translateY(0)" }, "50%": { transform: "translateY(-6px)" } });
+const breathe = keyframes({ "0%, 100%": { opacity: 0.35, transform: "scale(.9)" }, "50%": { opacity: 0.8, transform: "scale(1.08)" } });
 import { Dropzone as MantineDropzone } from "@mantine/dropzone";
 import { ForwardedRef, useRef } from "react";
 import { TbCloudUpload, TbUpload } from "react-icons/tb";
@@ -15,25 +20,44 @@ const useStyles = createStyles((theme) => ({
   },
 
   dropzone: {
+    borderRadius: 14,
+    transition: "background-color .2s, border-color .2s, box-shadow .3s",
+    "&[data-accept]": { boxShadow: `0 0 40px -12px ${ui.glow}` },
     borderWidth: 1.5,
     borderStyle: "dashed",
-    borderColor: "rgba(255,138,61,.45)",
+    borderColor: "rgba(145,132,217,.45)",
     backgroundColor: theme.colors.dark[7],
     paddingTop: 36,
     paddingBottom: 56,
     "&:hover, &[data-accept]": {
-      backgroundColor: "rgba(255,138,61,.06)",
-      borderColor: theme.colors.ember[5],
+      backgroundColor: "rgba(145,132,217,.06)",
+      borderColor: theme.colors.nocturne[5],
     },
   },
 
   icon: {
-    color: theme.colors.ember[5],
+    color: ui.accent2,
+    animation: `${float} 3.2s ease-in-out infinite`,
+    "@media (prefers-reduced-motion: reduce)": { animation: "none" },
+  },
+  iconWrap: {
+    position: "relative",
+    "&::before": {
+      content: '""',
+      position: "absolute",
+      inset: -14,
+      borderRadius: "50%",
+      background: `radial-gradient(circle, ${ui.glow}, transparent 70%)`,
+      animation: `${breathe} 3.2s ease-in-out infinite`,
+      "@media (prefers-reduced-motion: reduce)": { animation: "none" },
+    },
   },
 
   control: {
     position: "absolute",
     bottom: -20,
+    backgroundColor: `${ui.bg} !important`,
+    "&:hover": { backgroundColor: `${ui.accent900} !important` },
   },
 }));
 
@@ -78,13 +102,15 @@ const Dropzone = ({
           }
         }}
         className={classes.dropzone}
-        radius="md"
+        radius="lg"
       >
         <div style={{ pointerEvents: "none" }}>
           <Group position="center">
-            <TbCloudUpload size={46} className={classes.icon} />
+            <div className={classes.iconWrap}>
+              <TbCloudUpload size={46} className={classes.icon} style={{ position: "relative" }} />
+            </div>
           </Group>
-          <Text align="center" weight={700} size="lg" mt="xl">
+          <Text align="center" weight={500} size="lg" mt="xl">
             {title || <FormattedMessage id="upload.dropzone.title" />}
           </Text>
           <Text align="center" size="sm" mt="xs" color="dimmed">

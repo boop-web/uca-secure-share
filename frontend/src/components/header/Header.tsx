@@ -47,7 +47,7 @@ const useStyles = createStyles((theme) => ({
     borderLeft: 0,
     borderRight: 0,
     overflow: "hidden",
-    backgroundColor: ui.bgSoft,
+    backgroundColor: ui.panel,
 
     [theme.fn.largerThan("sm")]: {
       display: "none",
@@ -77,11 +77,11 @@ const useStyles = createStyles((theme) => ({
     display: "block",
     lineHeight: 1,
     padding: "9px 12px",
-    borderRadius: 999,
+    borderRadius: 8,
     color: ui.muted,
-    fontSize: 14.5,
+    fontSize: 14,
     fontWeight: 500,
-    transition: "color .15s",
+    transition: "color .15s, background-color .2s",
 
     "&:hover": {
       color: ui.text,
@@ -97,26 +97,58 @@ const useStyles = createStyles((theme) => ({
   linkActive: {
     "&, &:hover": {
       color: ui.text,
-      backgroundColor: "rgba(255,255,255,.05)",
+      backgroundColor: ui.panel2,
+      boxShadow: `inset 0 -1px 0 ${ui.accent}`,
     },
   },
 
+  // the Nocturne primary: outlined in the accent, a soft glow
   primary: {
     "&, &:hover": {
-      color: ui.onAccent,
-      backgroundImage: "linear-gradient(135deg, #ff9b4a, #ff6a2a)",
-      padding: "10px 16px",
-      fontWeight: 600,
+      color: ui.accent300,
+      border: `1px solid ${ui.accent}`,
+      boxShadow: `0 0 24px -12px ${ui.glow}`,
+      padding: "9px 14px",
       fontSize: 13.5,
     },
+    "&:hover": { backgroundColor: ui.accent900 },
     [theme.fn.smallerThan("sm")]: {
       "&, &:hover": {
-        backgroundImage: "none",
+        border: 0,
+        boxShadow: "none",
         color: ui.accent2,
         padding: theme.spacing.md,
         fontSize: 15,
       },
     },
+  },
+
+  // UCA ID: the one account across UCA apps (ucagg.de/account)
+  idchip: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 8,
+    height: 32,
+    padding: "0 12px 0 8px",
+    borderRadius: 999,
+    border: `1px solid ${ui.line}`,
+    background: ui.bgSoft,
+    color: ui.accent2,
+    font: `500 11px/1 ${ui.mono}`,
+    letterSpacing: ".12em",
+    transition: "border-color .2s, color .2s, box-shadow .3s",
+    "&:hover": { borderColor: "rgba(145,132,217,.45)", color: ui.accent300, boxShadow: `0 0 20px -10px ${ui.glow}` },
+    "& i": {
+      width: 14,
+      height: 14,
+      borderRadius: "50%",
+      border: `2px solid ${ui.accent}`,
+      boxShadow: `0 0 10px ${ui.glow}`,
+      position: "relative",
+      flex: "none",
+    },
+    "& i::after": { content: '""', position: "absolute", inset: 3, borderRadius: "50%", background: ui.accent2 },
+    [theme.fn.smallerThan("sm")]: { margin: `${theme.spacing.sm}px ${theme.spacing.md}px` },
   },
 }));
 
@@ -126,6 +158,7 @@ const Header = () => {
   const config = useConfig();
   const t = useTranslate();
 
+  const { classes, cx } = useStyles();
   const [opened, toggleOpened] = useDisclosure(false);
 
   const [currentRoute, setCurrentRoute] = useState("");
@@ -133,6 +166,15 @@ const Header = () => {
   useEffect(() => {
     setCurrentRoute(router.pathname);
   }, [router.pathname]);
+
+  const idChip: NavLink = {
+    component: (
+      <a href="https://ucagg.de/account" className={classes.idchip} title="UCA ID - one account for every UCA app" rel="noopener">
+        <i aria-hidden="true" />
+        UCA ID
+      </a>
+    ),
+  };
 
   const authenticatedLinks: NavLink[] = [
     {
@@ -142,6 +184,7 @@ const Header = () => {
     {
       component: <NavbarShareMenu />,
     },
+    idChip,
     {
       component: <ActionAvatar />,
     },
@@ -161,6 +204,8 @@ const Header = () => {
     });
   }
 
+  unauthenticatedLinks.push(idChip);
+
   if (config.get("share.allowRegistration"))
     unauthenticatedLinks.push({
       link: "/auth/signUp",
@@ -168,13 +213,12 @@ const Header = () => {
       primary: true,
     });
 
-  const { classes, cx } = useStyles();
   const items = (
     <>
       {(user ? authenticatedLinks : unauthenticatedLinks).map((link, i) => {
         if (link.component) {
           return (
-            <Box px={6} py={12} key={i}>
+            <Box px={4} py={12} key={i} sx={{ display: "flex", alignItems: "center" }}>
               {link.component}
             </Box>
           );
@@ -196,7 +240,7 @@ const Header = () => {
     </>
   );
   return (
-    <MantineHeader height={HEADER_HEIGHT} mb={36} className={classes.root}>
+    <MantineHeader height={HEADER_HEIGHT} mb={32} className={classes.root}>
       <Container size={1040} px="md" className={classes.header}>
         <Brand />
         <Group spacing={6} className={classes.links}>

@@ -24,7 +24,7 @@ import toast from "../../../utils/toast.util";
 const useStyles = createStyles((theme) => ({
   title: {
     fontSize: 26,
-    fontWeight: 900,
+    fontWeight: 500,
     fontFamily: `Greycliff CF, ${theme.fontFamily}`,
   },
 
@@ -63,14 +63,14 @@ const ResetPassword = () => {
 
   return (
     <Container size={460} my={30}>
-      <Title order={2} weight={900} align="center">
+      <Title order={2} weight={500} align="center">
         <FormattedMessage id="resetPassword.title" />
       </Title>
       <Text color="dimmed" size="sm" align="center">
         <FormattedMessage id="resetPassword.description" />
       </Text>
 
-      <Paper withBorder shadow="md" p={30} radius="md" mt="xl">
+      <Paper withBorder shadow="md" p={30} radius="lg" mt="xl">
         <form
           onSubmit={form.onSubmit((values) =>
             authService

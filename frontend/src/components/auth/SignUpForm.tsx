@@ -1,3 +1,5 @@
+import CoreOrb from "../home/CoreOrb";
+import { ui } from "../../styles/mantine.style";
 import {
   Anchor,
   Button,
@@ -62,7 +64,8 @@ const SignUpForm = () => {
 
   return (
     <Container size={420} my={40}>
-      <Title order={2} align="center" weight={900}>
+      <CoreOrb size={112} style={{ margin: "-10px auto 4px" }} />
+      <Title order={2} align="center" weight={500} sx={{ letterSpacing: "-.02em" }}>
         <FormattedMessage id="signup.title" />
       </Title>
       {config.get("share.allowRegistration") && (
@@ -73,7 +76,7 @@ const SignUpForm = () => {
           </Anchor>
         </Text>
       )}
-      <Paper withBorder shadow="md" p={30} mt={30} radius="md">
+      <Paper withBorder shadow="md" p={30} mt={30} radius="lg" sx={{ backgroundImage: `linear-gradient(180deg, ${ui.panel2}, ${ui.panel})` }}>
         <form
           onSubmit={form.onSubmit((values) =>
             signUp(values.email, values.username, values.password),

@@ -132,7 +132,9 @@ function App({ Component, pageProps }: AppProps) {
                         <div>
                           <Header />
                           <Container size={1040} px="md">
-                            <Component {...pageProps} />
+                            <div className="uca-page" key={router.pathname}>
+                              <Component {...pageProps} />
+                            </div>
                           </Container>
                         </div>
                         <Footer />

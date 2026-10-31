@@ -1,3 +1,5 @@
+import CoreOrb from "../home/CoreOrb";
+import { ui } from "../../styles/mantine.style";
 import {
   Anchor,
   Button,
@@ -148,7 +150,8 @@ const SignInForm = ({ redirectPath }: { redirectPath: string }) => {
 
   return (
     <Container size={420} my={40}>
-      <Title order={2} align="center" weight={900}>
+      <CoreOrb size={112} style={{ margin: "-10px auto 4px" }} />
+      <Title order={2} align="center" weight={500} sx={{ letterSpacing: "-.02em" }}>
         <FormattedMessage id="signin.title" />
       </Title>
       {config.get("share.allowRegistration") && (
@@ -159,7 +162,7 @@ const SignInForm = ({ redirectPath }: { redirectPath: string }) => {
           </Anchor>
         </Text>
       )}
-      <Paper withBorder shadow="md" p={30} mt={30} radius="md">
+      <Paper withBorder shadow="md" p={30} mt={30} radius="lg" sx={{ backgroundImage: `linear-gradient(180deg, ${ui.panel2}, ${ui.panel})` }}>
         {config.get("oauth.disablePassword") || (
           <form
             onSubmit={form.onSubmit((values) => {
@@ -218,6 +221,13 @@ const SignInForm = ({ redirectPath }: { redirectPath: string }) => {
           </Stack>
         )}
       </Paper>
+      <Text color="dimmed" size="xs" align="center" mt="lg">
+        Have a UCA ID? Open UCA Share from{" "}
+        <Anchor href="https://ucagg.de/account" size="xs">
+          ucagg.de/account
+        </Anchor>{" "}
+        to sign in with one tap.
+      </Text>
     </Container>
   );
 };

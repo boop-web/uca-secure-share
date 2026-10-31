@@ -47,14 +47,14 @@ const ResetPassword = () => {
 
   return (
     <Container size={460} my={30}>
-      <Title order={2} weight={900} align="center">
+      <Title order={2} weight={500} align="center">
         <FormattedMessage id="resetPassword.text.resetPassword" />
       </Title>
       <Text color="dimmed" size="sm" align="center">
         <FormattedMessage id="resetPassword.text.enterNewPassword" />
       </Text>
 
-      <Paper withBorder shadow="md" p={30} radius="md" mt="xl">
+      <Paper withBorder shadow="md" p={30} radius="lg" mt="xl">
         <form
           onSubmit={form.onSubmit((values) => {
             authService

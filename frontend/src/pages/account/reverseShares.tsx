@@ -152,7 +152,7 @@ const MyShares = () => {
                                   </Text>
                                 </Anchor>
                                 <ActionIcon
-                                  color="ember"
+                                  color="nocturne"
                                   variant="light"
                                   size={25}
                                   onClick={() => {
@@ -189,7 +189,7 @@ const MyShares = () => {
                   <td>
                     <Group position="right">
                       <ActionIcon
-                        color="ember"
+                        color="nocturne"
                         variant="light"
                         size={25}
                         onClick={() => {

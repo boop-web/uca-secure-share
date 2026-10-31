@@ -4,16 +4,15 @@ import { ui } from "../../styles/mantine.style";
 
 const useStyles = createStyles(() => ({
   kicker: {
-    color: ui.accent,
-    letterSpacing: ".16em",
+    color: ui.accent2,
+    font: `500 10.5px/1 ${ui.mono}`,
+    letterSpacing: ".22em",
     textTransform: "uppercase",
-    fontSize: 12,
-    fontWeight: 600,
-    marginBottom: 6,
+    marginBottom: 10,
   },
 }));
 
-// Small orange kicker + heading, with optional actions on the right.
+// Small mono kicker (Nocturne) + heading, with optional actions on the right.
 const PageTitle = ({
   kicker,
   title,
@@ -32,7 +31,7 @@ const PageTitle = ({
     <Group position="apart" align="flex-end" mb={mb} spacing="sm">
       <div style={{ minWidth: 0 }}>
         {kicker && <div className={classes.kicker}>{kicker}</div>}
-        <Title order={2} sx={{ fontSize: 28, lineHeight: 1.15 }}>
+        <Title order={2} sx={{ fontSize: 28, lineHeight: 1.15, fontWeight: 500, letterSpacing: "-.02em" }}>
           {title}
         </Title>
         {description && (

@@ -19,6 +19,7 @@ import { PrismaService } from "src/prisma/prisma.service";
 import { OAuthService } from "../oauth/oauth.service";
 import { GenericOidcProvider } from "../oauth/provider/genericOidc.provider";
 import { UserService } from "../user/user.service";
+import { UcaCoreService } from "../uca/uca-core.service";
 import { AuthRegisterDTO } from "./dto/authRegister.dto";
 import { AuthSignInDTO } from "./dto/authSignIn.dto";
 import { LdapService } from "./ldap.service";
@@ -33,6 +34,7 @@ export class AuthService {
     private ldapService: LdapService,
     private userService: UserService,
     @Inject(forwardRef(() => OAuthService)) private oAuthService: OAuthService,
+    private uca: UcaCoreService,
   ) {}
   private readonly logger = new Logger(AuthService.name);
 
@@ -56,6 +58,8 @@ export class AuthService {
       const accessToken = await this.createAccessToken(user, refreshTokenId);
 
       this.logger.log(`User ${user.email} signed up from IP ${ip}`);
+      this.uca.syncUser(user);
+      this.uca.audit("account.signup", user.email, isAdmin ? "as admin" : null);
       return { accessToken, refreshToken, user };
     } catch (e) {
       if (e instanceof PrismaClientKnownRequestError) {
@@ -295,6 +299,7 @@ export class AuthService {
 
     if (!refreshTokenMetaData || refreshTokenMetaData.expiresAt < new Date())
       throw new UnauthorizedException();
+    this.uca.seen(refreshTokenMetaData.userId);
 
     return this.createAccessToken(
       refreshTokenMetaData.user,
@@ -303,6 +308,7 @@ export class AuthService {
   }
 
   async createRefreshToken(userId: string, idToken?: string) {
+    this.uca.seen(userId, true);
     const sessionDuration = this.config.get("general.sessionDuration");
     const { id, token } = await this.prisma.refreshToken.create({
       data: {

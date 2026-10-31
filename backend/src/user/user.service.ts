@@ -11,6 +11,7 @@ import { ConfigService } from "../config/config.service";
 import { FileService } from "../file/file.service";
 import { CreateUserDTO } from "./dto/createUser.dto";
 import { UpdateUserDto } from "./dto/updateUser.dto";
+import { UcaCoreService } from "../uca/uca-core.service";
 
 @Injectable()
 export class UserService {
@@ -21,6 +22,7 @@ export class UserService {
     private emailService: EmailService,
     private fileService: FileService,
     private configService: ConfigService,
+    private uca: UcaCoreService,
   ) {}
 
   async list() {
@@ -44,12 +46,14 @@ export class UserService {
     }
 
     try {
-      return await this.prisma.user.create({
+      const created = await this.prisma.user.create({
         data: {
           ...dto,
           password: hash,
         },
       });
+      this.uca.syncUser(created);
+      return created;
     } catch (e) {
       if (e instanceof PrismaClientKnownRequestError) {
         if (e.code == "P2002") {
@@ -65,11 +69,18 @@ export class UserService {
   async update(id: string, user: UpdateUserDto) {
     try {
       const hash = user.password && (await argon.hash(user.password));
+      const before = await this.prisma.user.findUnique({ where: { id } });
 
-      return await this.prisma.user.update({
+      const updated = await this.prisma.user.update({
         where: { id },
         data: { ...user, password: hash },
       });
+      // the UCA ID hub knows people by email: a new email = the old record goes, the new one comes
+      if (before && updated && before.email.toLowerCase() !== updated.email.toLowerCase()) {
+        this.uca.syncUser(before, true);
+        this.uca.syncUser(updated);
+      }
+      return updated;
     } catch (e) {
       if (e instanceof PrismaClientKnownRequestError) {
         if (e.code == "P2002") {
@@ -103,7 +114,9 @@ export class UserService {
       user.shares.map((share) => this.fileService.deleteAllFiles(share.id)),
     );
 
-    return await this.prisma.user.delete({ where: { id } });
+    const deleted = await this.prisma.user.delete({ where: { id } });
+    this.uca.syncUser(deleted, true);
+    return deleted;
   }
 
   async findOrCreateFromLDAP(

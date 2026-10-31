@@ -31,6 +31,9 @@ RUN npm run build && npm prune --production
 # Stage 5: Final image
 FROM node:22-alpine AS runner
 ENV NODE_ENV=docker
+# the git revision, shown in ucagg.de's control center (docker build --build-arg REVISION=$(git rev-parse --short HEAD))
+ARG REVISION=""
+ENV UCA_REVISION=$REVISION
 
 # Delete default node user
 RUN deluser --remove-home node

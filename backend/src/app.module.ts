@@ -18,6 +18,8 @@ import { ReverseShareModule } from "./reverseShare/reverseShare.module";
 import { ShareModule } from "./share/share.module";
 import { UserModule } from "./user/user.module";
 import { HomepageModule } from "./homepage/homepage.module";
+import { UcaCoreModule } from "./uca/uca-core.module";
+import { UcaControlModule } from "./uca/uca-control.module";
 
 @Module({
   imports: [
@@ -41,6 +43,8 @@ import { HomepageModule } from "./homepage/homepage.module";
     OAuthModule,
     AppCacheModule,
     HomepageModule,
+    UcaCoreModule,
+    UcaControlModule,
   ],
   controllers: [AppController],
   providers: [

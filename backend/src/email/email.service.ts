@@ -123,6 +123,26 @@ export class EmailService {
     );
   }
 
+  /** a plain text email from Share's own sender (messages from ucagg.de/admin) */
+  async sendPlain(recipientEmail: string, subject: string, text: string) {
+    await this.sendMail(recipientEmail, subject, text);
+  }
+
+  /** a real SMTP connect + login, no mail sent (ucagg.de's daily check); never says the password */
+  async verifySmtp(): Promise<{ ok: boolean; detail: string }> {
+    if (!this.config.get("smtp.enabled")) return { ok: false, detail: "SMTP is switched off" };
+    if (!this.config.get("smtp.host") || !this.config.get("smtp.email")) return { ok: false, detail: "SMTP host or sender missing" };
+    const t = this.getTransporter();
+    try {
+      await Promise.race([t.verify(), new Promise((_, rej) => setTimeout(() => rej(new Error("no answer in 15 s")), 15_000))]);
+      return { ok: true, detail: `login ok at ${this.config.get("smtp.host")}:${this.config.get("smtp.port")}` };
+    } catch (e) {
+      return { ok: false, detail: String((e as Error).message || e).replace(/pass(word)?[^,;]*/gi, "").slice(0, 160) };
+    } finally {
+      t.close();
+    }
+  }
+
   async sendTestMail(recipientEmail: string) {
     await this.getTransporter()
       .sendMail({

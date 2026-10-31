@@ -10,6 +10,8 @@ import { SHARE_DIRECTORY } from "../constants";
 @Injectable()
 export class JobsService {
   private readonly logger = new Logger(JobsService.name);
+  /** when the hourly expired-share cleanup last finished (ucagg.de's health check reads it) */
+  static lastExpiredCleanup: { at: number; deleted: number } | null = null;
 
   constructor(
     private prisma: PrismaService,
@@ -40,6 +42,7 @@ export class JobsService {
     if (expiredShares.length > 0) {
       this.logger.log(`Deleted ${expiredShares.length} expired shares`);
     }
+    JobsService.lastExpiredCleanup = { at: Date.now(), deleted: expiredShares.length };
   }
 
   @Cron("0 * * * *")

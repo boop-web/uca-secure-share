@@ -12,6 +12,14 @@ export const config = {
 };
 
 export async function middleware(request: NextRequest) {
+  // ucagg.de's sign-in doors belong to the backend (Caddy rewrites them; this is the way there without Caddy)
+  const door = { "/admin/sso": "/api/uca/admin-sso", "/uca-id/sso": "/api/uca/id-sso" }[request.nextUrl.pathname];
+  if (door) {
+    const to = new URL(door, request.url);
+    to.search = request.nextUrl.search;
+    return NextResponse.redirect(to);
+  }
+
   const routes = {
     unauthenticated: new Routes(["/auth/*", "/"]),
     public: new Routes([

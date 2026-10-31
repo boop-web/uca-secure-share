@@ -20,12 +20,17 @@ export class UcaCoreService implements OnModuleInit {
   private readonly logger = new Logger("UCA");
   private sending = new Set<number>();
   private timer: NodeJS.Timeout | null = null;
+  private backfillWarned = false;
 
   constructor(private prisma: PrismaService) {}
 
   onModuleInit() {
     // the hub queue: anything due is retried every 10 minutes (cheap: one indexed query)
-    this.timer = setInterval(() => this.retryDue().catch(() => {}), 10 * 60_000);
+    // ... and the one-time backfill tries again until it went through (e.g. the hub did not know our token yet)
+    this.timer = setInterval(() => {
+      this.retryDue().catch(() => {});
+      this.backfillOnce().catch(() => {});
+    }, 10 * 60_000);
     this.timer.unref();
     setTimeout(() => this.backfillOnce().catch((e) => this.logger.warn("hub backfill: " + e.message)), 20_000).unref();
   }
@@ -155,7 +160,9 @@ export class UcaCoreService implements OnModuleInit {
       } catch { failed++; }
     }
     if (!failed) await this.setState("hub.backfillDone", { at: new Date().toISOString(), accounts: ok });
-    await this.audit("hub.backfill", "system", `${ok} accounts reported${failed ? `, ${failed} failed (tried again at the next start)` : ""}`, failed ? "warn" : "info");
+    // a failing backfill is logged once per start, not every 10 minutes
+    if (!failed || !this.backfillWarned) await this.audit("hub.backfill", "system", `${ok} accounts reported${failed ? `, ${failed} failed (tried again every 10 minutes)` : ""}`, failed ? "warn" : "info");
+    if (failed) this.backfillWarned = true;
     this.logger.log(`UCA ID hub backfill: ${ok} ok, ${failed} failed`);
   }
 }

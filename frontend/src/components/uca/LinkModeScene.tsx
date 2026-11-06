@@ -76,7 +76,7 @@ export default function LinkModeScene({ mode, n = 3, days = 3, label = true }: {
       {mode === "downloads" ? (
         <>
           {Array.from({ length: count }).map((_, i) => {
-            const slotW = Math.min(30, (W - 8 * (count - 1)) / count);
+            const slotW = Math.min(40, (W - 8 * (count - 1)) / count);
             const x = X0 + i * (slotW + 8);
             const delay = `${i * step}s`;
             return (

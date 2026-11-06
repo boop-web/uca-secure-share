@@ -61,6 +61,11 @@ const Body = ({ share }: { share: CompletedShare }) => {
           : t("upload.modal.completed.expires-on", {
               expiration: moment(share.expiration).format("LLL"),
             })}
+        {share.mode === "downloads" && share.maxDownloads
+          ? ` - or after ${share.maxDownloads} download${share.maxDownloads === 1 ? "" : "s"}, whichever comes first. You see every download in My shares.`
+          : share.mode === "days"
+            ? ". You see every download in My shares."
+            : ""}
       </Text>
 
       <Button

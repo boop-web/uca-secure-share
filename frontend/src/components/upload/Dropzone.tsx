@@ -10,7 +10,7 @@ import { TbCloudUpload, TbUpload } from "react-icons/tb";
 import { FormattedMessage } from "react-intl";
 import useTranslate from "../../hooks/useTranslate.hook";
 import { FileUpload } from "../../types/File.type";
-import { byteToHumanSizeString } from "../../utils/fileSize.util";
+import { size as byteToHumanSizeString } from "../../services/uca.service";
 import toast from "../../utils/toast.util";
 
 const useStyles = createStyles((theme) => ({

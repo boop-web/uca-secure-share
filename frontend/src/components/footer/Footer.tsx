@@ -91,9 +91,11 @@ const Footer = () => {
         <div className={classes.about}>
           <Brand />
           <p>
-            Send big files with a private link - with an expiry, a password or
-            a download limit. Part of UCA, made by one person; the files stay
-            on UCA&apos;s own server (IONOS, Kansas City, USA).
+            Send a file to someone with one link that ends after the
+            downloads or days you chose - in UCA Pro and UCA Max. Downloads are
+            listed with number, time and device type only (no IP, no
+            location). Made by one person; the files stay on UCA&apos;s own
+            server (IONOS, Kansas City, USA).
           </p>
         </div>
         <nav className={classes.col} aria-label="UCA">

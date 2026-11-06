@@ -1,4 +1,4 @@
-import { Button, Group } from "@mantine/core";
+import { Box, Button, Group } from "@mantine/core";
 import { useModals } from "@mantine/modals";
 import { cleanNotifications } from "@mantine/notifications";
 import { AxiosError } from "axios";
@@ -20,6 +20,10 @@ import { FileUpload } from "../../types/File.type";
 import { CreateShare, Share } from "../../types/share.type";
 import toast from "../../utils/toast.util";
 import { useRouter } from "next/router";
+import PausedBanner from "../../components/uca/PausedBanner";
+import PlanHint from "../../components/uca/PlanHint";
+import QuotaBar from "../../components/uca/QuotaBar";
+import ucaService, { UcaMe } from "../../services/uca.service";
 
 const promiseLimit = pLimit(3);
 let errorToastShown = false;
@@ -42,6 +46,12 @@ const Upload = ({
   const config = useConfig();
   const [files, setFiles] = useState<FileUpload[]>([]);
   const [isUploading, setisUploading] = useState(false);
+  // UCA Share v2: the person's plan (UCA Pro / UCA Max), space and limits; reverse-share uploads have their own
+  const [me, setMe] = useState<UcaMe | null>(null);
+  const refreshMe = () => {
+    if (!isReverseShare && user) ucaService.me().then(setMe).catch(() => setMe(null));
+  };
+  useEffect(refreshMe, [user, isReverseShare]);
 
   useConfirmLeave({
     message: t("upload.notify.confirm-leave"),
@@ -50,7 +60,7 @@ const Upload = ({
 
   const chunkSize = useRef(parseInt(config.get("share.chunkSize")));
 
-  maxShareSize ??= parseInt(config.get("share.maxSize"));
+  maxShareSize ??= me?.limits.perLinkBytes ?? parseInt(config.get("share.maxSize"));
   const autoOpenCreateUploadModal = config.get("share.autoOpenShareModal");
 
   const uploadFiles = async (share: CreateShare, files: FileUpload[]) => {
@@ -117,6 +127,16 @@ const Upload = ({
               // Retry with the expected chunk index
               chunkIndex = e.response!.data!.expectedChunkIndex - 1;
               continue;
+            } else if (
+              e instanceof AxiosError &&
+              [402, 413, 503].includes(e.response?.status ?? 0)
+            ) {
+              // the plan, the space or a paused server: retrying cannot help - say why and stop
+              toast.axiosError(e);
+              setFileProgress(-1);
+              setisUploading(false);
+              refreshMe();
+              return;
             } else {
               setFileProgress(-1);
               // Retry after 5 seconds
@@ -146,6 +166,7 @@ const Upload = ({
         maxExpiration: config.get("share.maxExpiration"),
         shareIdLength: config.get("share.shareIdLength"),
         simplified,
+        plan: isReverseShare ? null : me,
       },
       files,
       uploadFiles,
@@ -195,6 +216,7 @@ const Upload = ({
           setisUploading(false);
           showCompletedUploadModal(modals, share);
           setFiles([]);
+          refreshMe();
         })
         .catch(() => toast.error(t("upload.notify.generic-error")));
     }
@@ -206,16 +228,26 @@ const Upload = ({
       <PageTitle
         kicker={t("upload.title")}
         title="Share files"
-        description="Drop files, then choose the link, expiry and who can open it."
+        description="Drop files, then choose how the link ends: after a number of downloads or after 1-3 days."
       >
         <Button
           loading={isUploading}
-          disabled={files.length <= 0}
+          disabled={files.length <= 0 || (!isReverseShare && !!me && !me.canSend)}
           onClick={() => showCreateUploadModalCallback(files)}
         >
           <FormattedMessage id="common.button.share" />
         </Button>
       </PageTitle>
+      <PausedBanner />
+      {!isReverseShare && me && !me.canSend ? (
+        <PlanHint text={me.upgrade?.text} />
+      ) : (
+      <>
+      {!isReverseShare && me && (
+        <Box mb="md">
+          <QuotaBar me={me} adding={files.reduce((t, f) => t + f.size, 0)} />
+        </Box>
+      )}
       <Dropzone
         title={
           !autoOpenCreateUploadModal && files.length > 0
@@ -228,6 +260,8 @@ const Upload = ({
       />
       {files.length > 0 && (
         <FileList<FileUpload> files={files} setFiles={setFiles} />
+      )}
+      </>
       )}
     </>
   );

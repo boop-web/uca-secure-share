@@ -22,6 +22,7 @@ import {
   TbShare,
   TbSocial,
   TbHome,
+  TbStack2,
 } from "react-icons/tb";
 import { FormattedMessage } from "react-intl";
 
@@ -29,6 +30,7 @@ const categories = [
   { name: "General", icon: <TbSettings /> },
   { name: "Email", icon: <TbMail /> },
   { name: "Share", icon: <TbShare /> },
+  { name: "Plans", icon: <TbStack2 /> },
   { name: "SMTP", icon: <TbAt /> },
   { name: "OAuth", icon: <TbSocial /> },
   { name: "LDAP", icon: <TbBinaryTree /> },

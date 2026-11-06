@@ -8,6 +8,7 @@ import { JwtService, JwtSignOptions } from "@nestjs/jwt";
 import { Share, User } from "@prisma/client";
 import * as archiver from "archiver";
 import * as argon from "argon2";
+import * as crypto from "crypto";
 import * as fs from "fs";
 import * as moment from "moment";
 import { ClamScanService } from "src/clamscan/clamscan.service";
@@ -18,6 +19,7 @@ import { PrismaService } from "src/prisma/prisma.service";
 import { ReverseShareService } from "src/reverseShare/reverseShare.service";
 import { parseRelativeDateToAbsolute } from "src/utils/date.util";
 import { SHARE_DIRECTORY } from "../constants";
+import { PlanService } from "src/uca/plan.service";
 import { CreateShareDTO } from "./dto/createShare.dto";
 
 @Injectable()
@@ -31,7 +33,31 @@ export class ShareService {
     private jwtService: JwtService,
     private reverseShareService: ReverseShareService,
     private clamScanService: ClamScanService,
+    private plans: PlanService,
   ) {}
+
+  /**
+   * UCA Share v2 (6 Nov 2026): who may send and for how long. Without a mode (admins only) Share's old rules apply.
+   * Returns the share's expiry and the mode fields; refuses without UCA Pro / UCA Max (admins: full access).
+   */
+  async linkRules(share: CreateShareDTO, user?: User) {
+    const plan = await this.plans.planOf(user);
+    const admin = plan.plan === "admin";
+    if (!admin) this.plans.assertCanSend(plan);
+    if (!share.mode && admin) return null;
+    const mode = share.mode || "days";
+    const maxDays = plan.maxDays;
+    if (mode === "downloads") {
+      const n = Number(share.maxDownloads);
+      if (!Number.isInteger(n) || n < 1 || n > plan.maxDownloads)
+        throw new BadRequestException(`Downloads: from 1 to ${plan.maxDownloads}.`);
+      return { mode, maxDownloads: n, expiration: moment().add(maxDays, "days").toDate() };
+    }
+    const d = Number(share.days ?? maxDays);
+    if (!Number.isInteger(d) || d < 1 || d > maxDays)
+      throw new BadRequestException(`Days: from 1 to ${maxDays}.`);
+    return { mode, maxDownloads: null as number | null, expiration: moment().add(d, "days").toDate() };
+  }
 
   async create(share: CreateShareDTO, user?: User, reverseShareToken?: string) {
     if (!(await this.isShareIdAvailable(share.id)).isAvailable)
@@ -45,11 +71,24 @@ export class ShareService {
     }
 
     let expirationDate: Date;
+    let rules: Awaited<ReturnType<ShareService["linkRules"]>> = null;
 
     // If share is created by a reverse share token override the expiration date
     const reverseShare =
       await this.reverseShareService.getByToken(reverseShareToken);
-    if (reverseShare) {
+    this.plans.assertDiskOpen();
+    if (!reverseShare && !user)
+      throw new ForbiddenException("Sign in to send files.", "plan_required");
+    if (!reverseShare) {
+      rules = await this.linkRules(share, user);
+      if (rules && share.totalSize != null)
+        await this.plans.assertRoom(user, share.id, Number(share.totalSize));
+    }
+    const { mode: _m, maxDownloads: _x, days: _d, totalSize: _t, ...shareData } = share;
+    void _m; void _x; void _d; void _t;
+    if (rules) {
+      expirationDate = rules.expiration;
+    } else if (reverseShare) {
       expirationDate = reverseShare.shareExpiration;
     } else {
       const parsedExpiration = parseRelativeDateToAbsolute(share.expiration);
@@ -77,10 +116,12 @@ export class ShareService {
 
     const shareTuple = await this.prisma.share.create({
       data: {
-        ...share,
+        ...shareData,
+        ...(rules ? { mode: rules.mode, maxDownloads: rules.maxDownloads } : {}),
         expiration: expirationDate,
         creator: { connect: user ? { id: user.id } : undefined },
-        security: { create: share.security },
+        // a v2 link counts downloads, not page views: maxViews only for admins' links without a mode
+        security: { create: rules && share.security ? { ...share.security, maxViews: undefined } : share.security },
         recipients: {
           create: share.recipients
             ? share.recipients.map((email) => ({ email }))
@@ -232,7 +273,12 @@ export class ShareService {
       orderBy: {
         expiration: "desc",
       },
-      include: { recipients: true, files: true, security: true },
+      include: {
+        recipients: true,
+        files: true,
+        security: true,
+        downloadLog: { orderBy: { id: "asc" }, select: { n: true, at: true, device: true } },
+      },
     });
 
     return shares.map((share) => {
@@ -360,6 +406,8 @@ export class ShareService {
       shareId,
       shareCreatedAt: moment(createdAt).unix(),
       iat: moment().unix(),
+      // one visit = one token (UCA Share v2 counts downloads per visit): two visitors in the same second differ
+      visit: crypto.randomBytes(8).toString("hex"),
     };
 
     const tokenOptions: JwtSignOptions = {

@@ -25,6 +25,13 @@ export class MyShareDTO extends OmitType(ShareDTO, [
   @Expose()
   security?: MyShareSecurityDTO;
 
+  // UCA Share v2: every download (number, time, device label - no IP)
+  @Expose()
+  endedAt?: Date | null;
+
+  @Expose()
+  downloadLog?: { n: number; at: Date; device: string }[];
+
   from(partial: Partial<MyShareDTO>) {
     return plainToClass(MyShareDTO, partial, { excludeExtraneousValues: true });
   }

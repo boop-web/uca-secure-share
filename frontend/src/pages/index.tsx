@@ -5,12 +5,13 @@ import { useRouter } from "next/router";
 import { useEffect, useRef, useState } from "react";
 import CoreOrb, { pulseOrb } from "../components/home/CoreOrb";
 import ShareScene from "../components/home/ShareScene";
+import LinkModeScene from "../components/uca/LinkModeScene";
+import ucaService, { size, UcaStatus, UPGRADE_URL } from "../services/uca.service";
 import Meta from "../components/Meta";
 import useConfig from "../hooks/config.hook";
 import useUser from "../hooks/user.hook";
 import homepageService from "../services/homepage.service";
 import { ui } from "../styles/mantine.style";
-import { byteToUnitAndSize } from "../utils/fileSize.util";
 import { HOMEPAGE_DEFAULTS, resolveHomepage } from "../utils/homepage.util";
 import { siteUrl } from "../utils/seo.util";
 
@@ -172,6 +173,36 @@ const useStyles = createStyles((theme) => ({
       strokeLinejoin: "round",
     },
   },
+  plans: {
+    display: "grid",
+    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+    gap: 16,
+    maxWidth: 760,
+    margin: "0 auto",
+    [theme.fn.smallerThan("sm")]: { gridTemplateColumns: "1fr" },
+  },
+  plan: {
+    position: "relative",
+    background: `linear-gradient(180deg, ${ui.panel2}, ${ui.panel})`,
+    border: `1px solid ${ui.line}`,
+    borderRadius: 16,
+    padding: "22px 22px 20px",
+    transition: "transform .3s cubic-bezier(.2,.7,.2,1), border-color .3s, box-shadow .3s",
+    "&:hover": { transform: "translateY(-3px)", borderColor: ui.lineStrong, boxShadow: "0 0 34px -10px rgba(var(--uca-accent-rgb, 145, 132, 217), .35)" },
+    "& h3": { margin: "0 0 4px", fontSize: 19, fontWeight: 500, letterSpacing: "-.01em" },
+    "& .big": { font: `500 30px/1.1 ${ui.font}`, color: ui.accent300, margin: "12px 0 2px", letterSpacing: "-.02em" },
+    "& .sub": { color: ui.muted, fontSize: 13.5, margin: 0 },
+    "& ul": { margin: "14px 0 0", padding: 0, listStyle: "none", color: ui.muted, fontSize: 14, lineHeight: 1.8 },
+    "& li::before": { content: '"\\00B7\\00a0\\00a0"', color: ui.accent2 },
+  },
+  planMax: { borderColor: "rgba(var(--uca-accent-rgb, 145, 132, 217), .45)", boxShadow: "0 0 30px -14px rgba(var(--uca-accent-rgb, 145, 132, 217), .5)" },
+  modes: {
+    display: "grid",
+    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+    gap: 16,
+    [theme.fn.smallerThan("sm")]: { gridTemplateColumns: "1fr" },
+  },
+  needs: { color: ui.muted, fontSize: 14, margin: "16px 0 0", "& a": { color: ui.accent300 } },
   faq: {
     margin: "10px 0 34px",
     "& > h2": { textAlign: "center", fontSize: "clamp(24px, 3.6vw, 30px)", fontWeight: 500, letterSpacing: "-.02em", margin: "0 0 20px", color: ui.text },
@@ -204,32 +235,39 @@ const icons = [
   </svg>,
 ];
 
-// [image, width, height, title, text, alt]; "{max}" is the configured share size limit
+// [image, width, height, title, text, alt] - the v2 pictures live in the images volume (/img, like the logo), taken
+// on share.ucagg.de with demo files from C:\Users\Public
 const STEPS: [string, number, number, string, string, string][] = [
-  ["/home/step-upload.webp", 2512, 1536, "Drop your files", "Drag anything onto the page - photos, documents, music - up to {max} in total. No account needed.", "The upload page with three files ready to share"],
-  ["/home/step-create.webp", 880, 1013, "Choose how it lives", "Pick the link, how long it stays online, a password or a download limit, and who should get it by email.", "The Create Share dialog with link, expiry and options"],
-  ["/home/step-ready.webp", 880, 439, "Send the link", "Your link is ready in seconds. Copy it and send it any way you like.", "The Share ready dialog with the link to copy"],
-  ["/home/step-download.webp", 2080, 543, "They download", "One click per file or everything at once. PDFs, pictures and audio can be previewed first.", "A shared folder with three files to download"],
+  ["/img/home/v2-upload.webp", 2400, 1500, "Drop your files", "Drag photos, documents or a whole folder onto the page - up to 250 MB per link with UCA Pro, 750 MB with UCA Max. The bar shows the space your live links use.", "The upload page with files ready to send and the space bar"],
+  ["/img/home/v2-modes.webp", 1000, 1400, "Choose how the link ends", "Downloads: it ends after 1 to 10 downloads, or after 3 days at the latest. Days: it ends after 1, 2 or 3 days, however often it is downloaded.", "The dialog with the two link modes, Downloads and Days"],
+  ["/img/home/v2-ready.webp", 1000, 520, "Send the link", "Your link is ready in seconds. Copy it and send it any way you like - chat, email, text message.", "The link is ready to copy"],
+  ["/img/home/v2-downloads.webp", 2400, 1000, "They download - you see it", "One click per file or everything at once. In My shares you see each download: number, time and device type.", "A shared folder with files to download"],
 ];
 
-// Landing sections for what people search for; honest about what the
-// service does (TLS to our own server, not end-to-end encryption).
+const OLD_SHOTS = ["/home/step-upload.webp", "/home/step-create.webp", "/home/step-ready.webp", "/home/step-download.webp"];
+
+// Landing sections for what people search for; honest about what the service does (TLS to our own server, not
+// end-to-end encryption).
 const USES: [string, string][] = [
-  ["Send large files free", "Share videos, photo folders, project files or backups up to {max} per share - free, with no subscription and no paywall. Recipients download straight from the link, file by file or all at once."],
-  ["Share files with a link", "Every upload becomes one file transfer link you can paste into a chat, an email or a text message. Optionally we email the link to your recipients for you."],
-  ["Secure file sharing you control", "Files travel encrypted over HTTPS to our own server and can only be opened with the link. Add a password, an expiry date or a download limit; expired shares are deleted automatically."],
+  ["Send a file to someone else", "UCA Share is for sending - a photo to a friend, a document to a colleague, a video to family. Not for syncing your own devices: the link ends, the files go."],
+  ["A link that ends by itself", "Pick a number of downloads or a number of days. When the link ends, its files are deleted and the space is yours again. Nothing lingers on a server for months."],
+  ["Know when it arrived", "Every download is listed: \"Download 2, today 14:32, Android phone\". With UCA AI on your PC you even get a note the moment your file is downloaded."],
 ];
 
-const faqItems = (max: string, needsAccount: boolean): [string, string][] => [
-  ["Is UCA Share free?", "Yes. Sending files is free: no subscription, no paywall, no ads. UCA Share is part of the UCA family of apps."],
-  ["How large can my files be?", `Up to ${max} per share. You can add as many files to a share as you like within that limit.`],
-  ["Do I need an account?", needsAccount ? "Yes, a free account is needed to upload. Recipients never need an account - the link is enough." : "No. Upload your files and send the link. Recipients do not need an account either. A free account lets you see and manage your shares later."],
-  ["Are my files encrypted?", "Files are encrypted in transit (HTTPS/TLS) to our own server and are only reachable through the share link, which you can protect with a password. They are not end-to-end encrypted, so for highly sensitive data, encrypt the files first (for example in a password-protected archive)."],
-  ["How long do shared files stay online?", "You decide when you create the share: pick an expiry date or a download limit. When a share expires, its files are removed automatically."],
+const PLAN_CARDS: [string, "pro" | "max", number, number, string][] = [
+  ["UCA Pro", "pro", 250 * 1024 ** 2, 1024 ** 3, "UCA AI + UCA Mesh + UCA My Home"],
+  ["UCA Max", "max", 750 * 1024 ** 2, 2.5 * 1024 ** 3, "Everything in UCA Pro + UCA Radar + UCA PDF Pro"],
+];
+
+const faqItems = (pro: string, max: string): [string, string][] => [
+  ["Who can use UCA Share?", `UCA Share is part of the UCA bundles on ucagg.de: UCA Pro (${pro}) and UCA Max (${max}). Recipients never need an account or a plan - the link is enough.`],
+  ["How does a link end?", "You choose when you send: Downloads (it ends after 1 to 10 downloads, or after 3 days at the latest) or Days (it ends after 1, 2 or 3 days). A link never lives longer than 3 days."],
+  ["What happens to the files?", "When a link ends or you delete it, its files are deleted from the server. Your space only counts live links, so it comes back at once."],
+  ["What do I see about downloads?", "For each download: its number, the time and the device type (for example \"Android phone \u00b7 Chrome\"). Share stores no IP address and no location for it."],
+  ["Are my files encrypted?", "Files are encrypted in transit (HTTPS/TLS) to our own server and are only reachable through the link, which you can protect with a password. They are not end-to-end encrypted, so for highly sensitive data, encrypt the files first."],
   ["Where are the files stored?", "On UCA's own server, hosted at IONOS in Kansas City (USA) - not on a third-party cloud service. Shared files are never listed publicly or in search engines."],
 ];
 
-const fill = (text: string, max: string) => text.replace(/\{max\}/g, max);
 
 // adds .in to every [data-reveal] element once it scrolls into view
 function useReveal() {
@@ -267,30 +305,26 @@ export default function Home() {
       .catch(() => {});
   }, []);
 
-  // the share size limit and whether uploads need an account come from the config
-  let max = "5 GB";
-  let needsAccount = false;
-  try {
-    const { size, unit } = byteToUnitAndSize(config.get("share.maxSize"));
-    if (size) max = `${size} ${unit}`;
-    needsAccount = config.get("share.allowUnauthenticatedShares") === false;
-  } catch {
-    /* keep the defaults */
-  }
-  const faq = faqItems(max, needsAccount);
+  // the plans' limits come from Share itself (admin-editable), with the owner's numbers as the fallback
+  const [status, setStatus] = useState<UcaStatus | null>(null);
+  useEffect(() => {
+    ucaService.status().then(setStatus).catch(() => {});
+  }, []);
+  const pro = status ? `${size(status.plans.pro.perLinkBytes)} per link, ${size(status.plans.pro.storageBytes)} at once` : "250 MB per link, 1 GB at once";
+  const max = status ? `${size(status.plans.max.perLinkBytes)} per link, ${size(status.plans.max.storageBytes)} at once` : "750 MB per link, 2.5 GB at once";
+  const faq = faqItems(pro, max);
   const base = siteUrl(config.get("general.appUrl"));
   const jsonLd = [
     {
       "@context": "https://schema.org",
       "@type": "WebApplication",
       name: "UCA Share",
-      description: `Secure file sharing in the browser: send files up to ${max} with a link, with an optional password, expiry date and download limit. Free, no paywall.`,
+      description: "Send a file to someone with one link that ends after a number of downloads or after 1 to 3 days. Part of UCA Pro and UCA Max.",
       url: base + "/",
       image: base + "/og.png",
       applicationCategory: "UtilitiesApplication",
       operatingSystem: "Any (web browser)",
       browserRequirements: "Requires JavaScript and a modern web browser",
-      offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
       publisher: { "@type": "Organization", name: "UCA", url: "https://ucagg.de/" },
     },
     {
@@ -310,8 +344,8 @@ export default function Home() {
   return (
     <div ref={root}>
       <Meta
-        title="Secure File Sharing: Send Large Files Free | UCA Share"
-        description={`Send files up to ${max} with a secure link: set an expiry, a password or a download limit. Free file sharing with no paywall and no ads.`}
+        title="Send a File With One Link That Ends | UCA Share"
+        description="UCA Share sends a file or photo to someone with one link that ends after 1-10 downloads or 1-3 days, and shows you every download. Part of UCA Pro and UCA Max."
         fullTitle
       />
       <Head>
@@ -324,7 +358,7 @@ export default function Home() {
       <section className={classes.hero}>
         <span className={classes.glow} aria-hidden="true" />
         <CoreOrb size={168} style={{ margin: "0 auto -6px" }} />
-        <p className={classes.kicker}>Secure file sharing</p>
+        <p className={classes.kicker}>A tool of the UCA ecosystem</p>
         <h1 className={classes.title}>
           {titleMain}
           {titleRest.length > 0 && (
@@ -348,7 +382,58 @@ export default function Home() {
             Sign in
           </Button>
         </div>
+        <p className={classes.needs}>
+          Needs <a href={UPGRADE_URL}>UCA Pro or UCA Max</a> on ucagg.de. Recipients need nothing but the link.
+        </p>
         <ShareScene />
+      </section>
+
+      <section className={classes.how} id="plans">
+        <div className={cx(classes.howHead, classes.reveal)} data-reveal>
+          <p className={classes.kicker}>In UCA Pro and UCA Max</p>
+          <h2>Pick the bundle, Share comes with it.</h2>
+          <p>Space counts only live links: when a link ends, its files go and the space is yours again.</p>
+        </div>
+        <div className={classes.plans}>
+          {PLAN_CARDS.map(([name, key, link, store, apps], i) => {
+            const p = status?.plans[key];
+            return (
+              <article key={name} className={cx(classes.plan, i === 1 && classes.planMax, classes.reveal)} data-reveal style={{ transitionDelay: `${i * 0.08}s` }}>
+                <h3>{name}</h3>
+                <p className="sub">{apps}</p>
+                <p className="big">{size(p?.perLinkBytes ?? link)}</p>
+                <p className="sub">per link {"\u00b7"} {size(p?.storageBytes ?? store)} in live links at once</p>
+                <ul>
+                  <li>Links end after 1-{status?.maxDownloads ?? 10} downloads or 1-{status?.maxDays ?? 3} days</li>
+                  <li>See every download</li>
+                  <li>Send from UCA AI on your PC</li>
+                </ul>
+                <Button component="a" href={UPGRADE_URL} mt={16} variant={i === 1 ? "filled" : "default"} fullWidth>
+                  Get {name} on ucagg.de
+                </Button>
+              </article>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className={classes.how} id="modes">
+        <div className={cx(classes.howHead, classes.reveal)} data-reveal>
+          <p className={classes.kicker}>Two ways a link ends</p>
+          <h2>Downloads or days - you choose when you send.</h2>
+        </div>
+        <div className={classes.modes}>
+          <article className={cx(classes.card, classes.reveal)} data-reveal>
+            <h3>Downloads</h3>
+            <p>Ends after 1 to 10 downloads - or after 3 days, whichever comes first.</p>
+            <LinkModeScene mode="downloads" n={3} />
+          </article>
+          <article className={cx(classes.card, classes.reveal)} data-reveal style={{ transitionDelay: ".08s" }}>
+            <h3>Days</h3>
+            <p>Ends after 1, 2 or 3 days, however often it is downloaded until then.</p>
+            <LinkModeScene mode="days" days={3} />
+          </article>
+        </div>
       </section>
 
       <section className={classes.grid}>
@@ -369,12 +454,27 @@ export default function Home() {
         {STEPS.map(([src, width, height, title, text, alt], i) => (
           <div className={classes.step} key={src}>
             <figure className={cx(classes.shot, classes.reveal)} data-reveal>
-              <img src={src} alt={alt} width={width} height={height} loading="lazy" decoding="async" />
+              <img
+                src={src}
+                alt={alt}
+                width={width}
+                height={height}
+                loading="lazy"
+                decoding="async"
+                // until the v2 picture is in the images volume, the old one built into the image
+                onError={(e) => {
+                  const img = e.currentTarget;
+                  if (!img.dataset.old) {
+                    img.dataset.old = "1";
+                    img.src = OLD_SHOTS[i];
+                  }
+                }}
+              />
             </figure>
             <div className={cx(classes.stepText, classes.reveal)} data-reveal style={{ transitionDelay: ".1s" }}>
               <b>{i + 1}</b>
               <h3>{title}</h3>
-              <p>{fill(text, max)}</p>
+              <p>{text}</p>
             </div>
           </div>
         ))}
@@ -383,13 +483,13 @@ export default function Home() {
       <section className={classes.how}>
         <div className={cx(classes.howHead, classes.reveal)} data-reveal>
           <p className={classes.kicker}>Why UCA Share</p>
-          <h2>Free, private file transfer - without the clutter.</h2>
+          <h2>Sending, not storing.</h2>
         </div>
         <div className={classes.grid}>
           {USES.map(([name, text], i) => (
             <article className={cx(classes.card, classes.reveal)} data-reveal key={name} style={{ transitionDelay: `${i * 0.08}s` }}>
               <h3>{name}</h3>
-              <p>{fill(text, max)}</p>
+              <p>{text}</p>
             </article>
           ))}
         </div>

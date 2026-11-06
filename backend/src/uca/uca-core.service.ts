@@ -77,12 +77,12 @@ export class UcaCoreService implements OnModuleInit {
       product: "share",
       email: String(u.email).toLowerCase(),
       name: u.username || null,
-      plan: "free",
-      planLabel: "Free",
+      plan: "bundle",
+      planLabel: "In UCA Pro and UCA Max",
       status,
       renewsAt: null,
       manageUrl: MANAGE_URL,
-      features: ["Big files with a private link", "Expiry, password and download limit", "Upload links for others"],
+      features: ["Send files with one link", "Ends after 1-10 downloads or 1-3 days", "See every download"],
       ...(backfill ? { backfill: true } : {}),
     };
   }

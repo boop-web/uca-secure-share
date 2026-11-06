@@ -7,6 +7,7 @@ import {
 import { Request } from "express";
 import * as moment from "moment";
 import { PrismaService } from "src/prisma/prisma.service";
+import { assertNotEnded } from "src/uca/downloads.service";
 import { ShareService } from "src/share/share.service";
 import { ConfigService } from "src/config/config.service";
 import { JwtGuard } from "src/auth/guard/jwt.guard";
@@ -45,6 +46,7 @@ export class ShareSecurityGuard extends JwtGuard {
         !moment(share.expiration).isSame(0))
     )
       throw new NotFoundException("Share not found");
+    await assertNotEnded(this.prisma, share, request);   // UCA Share v2: downloads used up
 
     if (share.security?.password && !shareToken)
       throw new ForbiddenException(

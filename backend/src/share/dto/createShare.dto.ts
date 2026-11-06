@@ -1,6 +1,10 @@
 import { Type } from "class-transformer";
 import {
   IsEmail,
+  IsIn,
+  IsInt,
+  Max,
+  Min,
   IsOptional,
   IsString,
   Length,
@@ -35,4 +39,27 @@ export class CreateShareDTO {
   @ValidateNested()
   @Type(() => ShareSecurityDTO)
   security: ShareSecurityDTO;
+
+  // UCA Share v2: "downloads" (ends after maxDownloads, at most 3 days) or "days" (ends after `days`)
+  @IsOptional()
+  @IsIn(["downloads", "days"])
+  mode?: "downloads" | "days";
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(1000)
+  maxDownloads?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(30)
+  days?: number;
+
+  // all files together (bytes), so a link over the plan's size is refused before any upload
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  totalSize?: number;
 }

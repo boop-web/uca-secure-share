@@ -29,6 +29,16 @@ export class ShareDTO {
   @Expose()
   size: number;
 
+  // UCA Share v2: the link's mode, its download limit and how many downloads it had
+  @Expose()
+  mode?: string | null;
+
+  @Expose()
+  maxDownloads?: number | null;
+
+  @Expose()
+  downloads?: number;
+
   from(partial: Partial<ShareDTO>) {
     return plainToClass(ShareDTO, partial, { excludeExtraneousValues: true });
   }

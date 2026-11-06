@@ -1,5 +1,6 @@
 import {
   ActionIcon,
+  Badge,
   Box,
   Button,
   Center,
@@ -26,6 +27,32 @@ import useTranslate from "../../hooks/useTranslate.hook";
 import shareService from "../../services/share.service";
 import { MyShare } from "../../types/share.type";
 import toast from "../../utils/toast.util";
+import QuotaBar from "../../components/uca/QuotaBar";
+import ucaService, { UcaMe } from "../../services/uca.service";
+
+// "Download 2, today 14:32, Android phone · Chrome"
+const when = (at: string) => {
+  const m = moment(at);
+  return m.isSame(moment(), "day") ? `today ${m.format("HH:mm")}` : m.isSame(moment().subtract(1, "day"), "day") ? `yesterday ${m.format("HH:mm")}` : m.format("D MMM HH:mm");
+};
+const showDownloads = (modals: ReturnType<typeof useModals>, share: MyShare) =>
+  modals.openModal({
+    title: `Downloads of ${share.name || share.id}`,
+    children: (
+      <Stack spacing={6}>
+        {(share.downloadLog || []).length === 0 ? (
+          <Text size="sm" color="dimmed">No downloads yet.</Text>
+        ) : (
+          (share.downloadLog || []).map((d) => (
+            <Text size="sm" key={d.n}>
+              Download {d.n}, {when(d.at)}, {d.device}
+            </Text>
+          ))
+        )}
+        <Text size="xs" color="dimmed" mt={8}>Only the number, the time and the device type are kept - no IP address, no location.</Text>
+      </Stack>
+    ),
+  });
 
 const MyShares = () => {
   const modals = useModals();
@@ -34,9 +61,11 @@ const MyShares = () => {
   const t = useTranslate();
 
   const [shares, setShares] = useState<MyShare[]>();
+  const [me, setMe] = useState<UcaMe | null>(null);
 
   useEffect(() => {
     shareService.getMyShares().then((shares) => setShares(shares));
+    ucaService.me().then(setMe).catch(() => setMe(null));
   }, []);
 
   if (!shares) return <CenterLoader />;
@@ -44,9 +73,14 @@ const MyShares = () => {
   return (
     <>
       <Meta title={t("account.shares.title")} />
-      <Title mb={30} order={3}>
+      <Title mb={16} order={3}>
         <FormattedMessage id="account.shares.title" />
       </Title>
+      {me && me.canSend && (
+        <Box mb={24}>
+          <QuotaBar me={me} />
+        </Box>
+      )}
       {shares.length == 0 ? (
         <Center style={{ height: "70vh" }}>
           <Stack align="center" spacing={10}>
@@ -73,9 +107,7 @@ const MyShares = () => {
                 <th>
                   <FormattedMessage id="account.shares.table.name" />
                 </th>
-                <th>
-                  <FormattedMessage id="account.shares.table.visitors" />
-                </th>
+                <th>Downloads</th>
                 <th>
                   <FormattedMessage id="account.shares.table.expiresAt" />
                 </th>
@@ -98,17 +130,20 @@ const MyShares = () => {
                   </td>
                   <td>{share.name}</td>
                   <td>
-                    {share.security.maxViews ? (
-                      <FormattedMessage
-                        id="account.shares.table.visitor-count"
-                        values={{
-                          count: share.views,
-                          max: share.security.maxViews,
-                        }}
-                      />
-                    ) : (
-                      share.views
-                    )}
+                    <Group spacing={6} noWrap>
+                      <Badge
+                        variant="outline"
+                        color={share.endedAt ? "gray" : "nocturne"}
+                        sx={{ cursor: "pointer", textTransform: "none" }}
+                        onClick={() => showDownloads(modals, share)}
+                        title="Show every download"
+                      >
+                        {share.mode === "downloads" && share.maxDownloads
+                          ? `${share.downloads ?? 0} of ${share.maxDownloads}`
+                          : `${share.downloads ?? 0}`}
+                      </Badge>
+                      {share.endedAt && <Text size="xs" color="dimmed">ended</Text>}
+                    </Group>
                   </td>
                   <td>
                     {moment(share.expiration).unix() === 0 ? (
@@ -177,7 +212,10 @@ const MyShares = () => {
                               cancel: t("common.button.cancel"),
                             },
                             onConfirm: () => {
-                              shareService.remove(share.id);
+                              shareService
+                                .remove(share.id)
+                                .then(() => ucaService.me().then(setMe))
+                                .catch(() => {});
                               setShares(
                                 shares.filter((item) => item.id !== share.id),
                               );

@@ -4,6 +4,7 @@ import { S3FileService } from "./s3.service";
 import { ConfigService } from "src/config/config.service";
 import { Readable } from "stream";
 import { PrismaService } from "../prisma/prisma.service";
+import { PlanService } from "src/uca/plan.service";
 
 @Injectable()
 export class FileService {
@@ -12,6 +13,7 @@ export class FileService {
     private localFileService: LocalFileService,
     private s3FileService: S3FileService,
     private configService: ConfigService,
+    private plans: PlanService,
   ) {}
 
   // Determine which service to use based on the current config value
@@ -36,7 +38,21 @@ export class FileService {
       name: string;
     },
     shareId: string,
+    user?: { id: string; email: string; isAdmin: boolean },
   ) {
+    // the server's disk is nearly full: uploads pause (downloads keep working)
+    this.plans.assertDiskOpen();
+    // UCA Share v2: a share of a signed-in sender stays within the plan's size per link and the sender's space
+    const share = await this.prisma.share.findUnique({ where: { id: shareId }, select: { creatorId: true, files: { select: { size: true } } } });
+    if (share?.creatorId) {
+      const owner = user && user.id === share.creatorId ? user : await this.prisma.user.findUnique({ where: { id: share.creatorId } });
+      if (owner) {
+        const done = share.files.reduce((n, f) => n + (parseInt(f.size) || 0), 0);
+        const chunkSize = Number(this.configService.get("share.chunkSize")) || 0;
+        const len = Buffer.isBuffer(data) ? (data as unknown as Buffer).length : Buffer.byteLength(String(data || ""), "base64");
+        await this.plans.assertRoom(owner, shareId, done + Math.max(0, chunk.index) * chunkSize + len);
+      }
+    }
     const storageService = this.getStorageService();
     return storageService.create(data, chunk, file, shareId);
   }

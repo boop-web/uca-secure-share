@@ -6,13 +6,17 @@ import {
   Param,
   Post,
   Query,
+  Req,
   Res,
   StreamableFile,
   UseGuards,
 } from "@nestjs/common";
 import { SkipThrottle } from "@nestjs/throttler";
 import * as contentDisposition from "content-disposition";
-import { Response } from "express";
+import { Request, Response } from "express";
+import { User } from "@prisma/client";
+import { GetUser } from "src/auth/decorator/getUser.decorator";
+import { DownloadsService } from "src/uca/downloads.service";
 import { CreateShareGuard } from "src/share/guard/createShare.guard";
 import { ShareOwnerGuard } from "src/share/guard/shareOwner.guard";
 import { FileService } from "./file.service";
@@ -21,7 +25,10 @@ import * as mime from "mime-types";
 
 @Controller("shares/:shareId/files")
 export class FileController {
-  constructor(private fileService: FileService) {}
+  constructor(
+    private fileService: FileService,
+    private downloads: DownloadsService,
+  ) {}
 
   @Post()
   @SkipThrottle()
@@ -36,6 +43,7 @@ export class FileController {
     },
     @Body() body: string,
     @Param("shareId") shareId: string,
+    @GetUser() user?: User,
   ) {
     const { id, name, chunkIndex, totalChunks } = query;
 
@@ -45,6 +53,7 @@ export class FileController {
       { index: parseInt(chunkIndex), total: parseInt(totalChunks) },
       { id, name },
       shareId,
+      user,
     );
   }
 
@@ -53,7 +62,9 @@ export class FileController {
   async getZip(
     @Res({ passthrough: true }) res: Response,
     @Param("shareId") shareId: string,
+    @Req() req: Request,
   ) {
+    await this.downloads.record(shareId, req);   // UCA Share v2: a real download (counted once per visit)
     const zipStream = await this.fileService.getZip(shareId);
 
     res.set({
@@ -71,8 +82,14 @@ export class FileController {
     @Param("shareId") shareId: string,
     @Param("fileId") fileId: string,
     @Query("download") download = "true",
+    @Req() req: Request,
   ) {
     const file = await this.fileService.get(shareId, fileId);
+    // UCA Share v2: a real download (counted once per visit); over the limit the opened file is closed again
+    await this.downloads.record(shareId, req).catch((e) => {
+      file.file.destroy();
+      throw e;
+    });
 
     const headers = {
       "Content-Type":

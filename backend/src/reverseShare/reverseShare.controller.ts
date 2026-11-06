@@ -13,6 +13,7 @@ import { User } from "@prisma/client";
 import { GetUser } from "src/auth/decorator/getUser.decorator";
 import { JwtGuard } from "src/auth/guard/jwt.guard";
 import { ConfigService } from "src/config/config.service";
+import { PlanService } from "src/uca/plan.service";
 import { CreateReverseShareDTO } from "./dto/createReverseShare.dto";
 import { ReverseShareDTO } from "./dto/reverseShare.dto";
 import { ReverseShareTokenWithShares } from "./dto/reverseShareTokenWithShares";
@@ -24,11 +25,14 @@ export class ReverseShareController {
   constructor(
     private reverseShareService: ReverseShareService,
     private config: ConfigService,
+    private plans: PlanService,
   ) {}
 
   @Post()
   @UseGuards(JwtGuard)
   async create(@Body() body: CreateReverseShareDTO, @GetUser() user: User) {
+    // UCA Share v2: upload links for others are part of UCA Pro / UCA Max too (admins: always)
+    this.plans.assertCanSend(await this.plans.planOf(user));
     const token = await this.reverseShareService.create(body, user.id);
 
     const link = `${this.config.get("general.appUrl")}/upload/${token}`;

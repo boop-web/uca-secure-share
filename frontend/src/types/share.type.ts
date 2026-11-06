@@ -9,6 +9,9 @@ export type Share = {
   expiration: Date;
   size: number;
   hasPassword: boolean;
+  mode?: "downloads" | "days" | null;
+  maxDownloads?: number | null;
+  downloads?: number;
 };
 
 export type CompletedShare = Share & {
@@ -27,6 +30,11 @@ export type CreateShare = {
   recipients: string[];
   expiration: string;
   security: ShareSecurity;
+  // UCA Share v2: the link's mode (the server sets the expiry from it)
+  mode?: "downloads" | "days";
+  maxDownloads?: number;
+  days?: number;
+  totalSize?: number;
 };
 
 export type ShareMetaData = {
@@ -38,6 +46,8 @@ export type MyShare = Omit<Share, "hasPassword"> & {
   views: number;
   createdAt: Date;
   security: MyShareSecurity;
+  endedAt?: string | null;
+  downloadLog?: { n: number; at: string; device: string }[];
 };
 
 export type MyReverseShare = {

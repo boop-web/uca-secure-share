@@ -7,6 +7,7 @@ import {
 import { Request } from "express";
 import * as moment from "moment";
 import { PrismaService } from "src/prisma/prisma.service";
+import { assertNotEnded } from "src/uca/downloads.service";
 
 @Injectable()
 export class ShareTokenSecurity implements CanActivate {
@@ -32,6 +33,7 @@ export class ShareTokenSecurity implements CanActivate {
         !moment(share.expiration).isSame(0))
     )
       throw new NotFoundException("Share not found");
+    await assertNotEnded(this.prisma, share, request);   // UCA Share v2: downloads used up
 
     return true;
   }

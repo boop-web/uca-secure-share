@@ -8,6 +8,10 @@ import { PrismaService } from "src/prisma/prisma.service";
 import { CreateUserDTO } from "src/user/dto/createUser.dto";
 import { UserService } from "src/user/user.service";
 import { ControlService, fail, iso } from "./control.service";
+import { DownloadsService, VISIT_MS } from "./downloads.service";
+import { PlanService } from "./plan.service";
+import { shareView } from "./share-view";
+import { ShareService } from "src/share/share.service";
 import { UcaCoreService } from "./uca-core.service";
 
 /**
@@ -54,6 +58,9 @@ export class ControlController {
     private users: UserService,
     private email: EmailService,
     private config: ConfigService,
+    private planSvc: PlanService,
+    private shareService: ShareService,
+    private downloads: DownloadsService,
   ) {}
 
   private audit(req: CReq, action: string, detail: string, level: "info" | "warn" = "info") {
@@ -67,7 +74,8 @@ export class ControlController {
   }
   /** bytes and share counts per creator, in one pass */
   private async usage() {
-    const files = await this.prisma.file.findMany({ select: { size: true, share: { select: { creatorId: true } } } });
+    const now = new Date();
+    const files = await this.prisma.file.findMany({ where: { share: { endedAt: null, OR: [{ expiration: { gt: now } }, { expiration: new Date(0) }] } }, select: { size: true, share: { select: { creatorId: true } } } });
     const shares = await this.prisma.share.groupBy({ by: ["creatorId"], _count: { _all: true } });
     const bytes = new Map<string, number>();
     for (const f of files) if (f.share?.creatorId) bytes.set(f.share.creatorId, (bytes.get(f.share.creatorId) || 0) + (Number(f.size) || 0));
@@ -107,9 +115,63 @@ export class ControlController {
       recentShares: shares.map((s) => ({ id: s.id, name: s.name || null, createdAt: iso(s.createdAt), expiresAt: s.expiration.getTime() === 0 ? null : iso(s.expiration), views: s.views, files: s._count.files })) };
   }
 
+  // ---------- UCA Share v2: a person's links (ucagg.de/account "UCA Share" panel) and usage per person (the deck) ----------
+  @Get("people/:email/shares")
+  async personShares(@Param("email") email: string) {
+    const e = String(email || "").trim().toLowerCase();
+    const u = await this.userByEmail(e);
+    const p = await this.planSvc.planOf(u || { email: e, isAdmin: false });
+    const appUrl = String(this.config.get("general.appUrl"));
+    const rows = u ? await this.prisma.share.findMany({ where: this.planSvc.listWhere(u.id), orderBy: { createdAt: "desc" }, take: 100,
+      include: { files: true, downloadLog: { orderBy: { id: "asc" } } } }) : [];
+    return { email: e, account: !!u, plan: p.plan, planLabel: p.label, until: p.until, disk: p.disk,
+      limits: { perLinkBytes: p.perLinkBytes, storageBytes: p.storageBytes, maxDays: p.maxDays, maxDownloads: p.maxDownloads },
+      usedBytes: u ? await this.planSvc.usedBytes(u.id) : 0, shares: rows.map((s) => shareView(s, appUrl, true)) };
+  }
+  @Delete("people/:email/shares/:id")
+  async deletePersonShare(@Req() req: CReq, @Param("email") email: string, @Param("id") id: string) {
+    const u = await this.userByEmail(email);
+    const s = u ? await this.prisma.share.findFirst({ where: { id: String(id || ""), creatorId: u.id } }) : null;
+    if (!u || !s) throw fail(404, "No such share for this email.");
+    await this.shareService.remove(s.id);
+    await this.audit(req, "share.delete", `${u.email.toLowerCase()}: link ${s.id} deleted`);
+    return { ok: true, usedBytes: await this.planSvc.usedBytes(u.id) };
+  }
+  /** "clean up now": expired and used-up links go with their files (the job does the same every 5 minutes) */
+  @Post("cleanup")
+  @HttpCode(200)
+  async cleanup(@Req() req: CReq) {
+    const now = new Date();
+    const rows = await this.prisma.share.findMany({ where: { OR: [
+      { AND: [{ expiration: { lt: now } }, { expiration: { not: new Date(0) } }] },
+      { endedAt: { lt: new Date(now.getTime() - VISIT_MS) } },
+    ] }, select: { id: true } });
+    for (const s of rows) await this.shareService.remove(s.id, true).catch(() => {});
+    await this.audit(req, "cleanup", `${rows.length} ended or expired links removed`);
+    return { ok: true, deleted: rows.length };
+  }
+  @Get("share-usage")
+  async shareUsage() {
+    const now = new Date();
+    const live = await this.prisma.share.findMany({ where: { endedAt: null, NOT: { creatorId: null }, OR: [{ expiration: { gt: now } }, { expiration: new Date(0) }] },
+      select: { creatorId: true, downloads: true, files: { select: { size: true } } } });
+    const week = await this.prisma.shareDownload.groupBy({ by: ["ownerId"], where: { at: { gt: new Date(Date.now() - 7 * 86400_000) } }, _count: { _all: true } });
+    const by = new Map<string, { liveShares: number; usedBytes: number; downloads: number }>();
+    for (const s of live) {
+      const r = by.get(s.creatorId) || { liveShares: 0, usedBytes: 0, downloads: 0 };
+      r.liveShares++; r.downloads += s.downloads; r.usedBytes += s.files.reduce((t, f) => t + (Number(f.size) || 0), 0);
+      by.set(s.creatorId, r);
+    }
+    const ids = [...new Set([...by.keys(), ...week.map((w) => w.ownerId).filter(Boolean)])] as string[];
+    const users = await this.prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true, email: true, isAdmin: true } });
+    const d = this.planSvc.disk();
+    return { disk: { level: d.level, freeGB: d.freeGB }, people: users.map((u) => ({ email: u.email.toLowerCase(), isAdmin: u.isAdmin, ...(by.get(u.id) || { liveShares: 0, usedBytes: 0, downloads: 0 }),
+      downloads7: week.find((w) => w.ownerId === u.id)?._count._all || 0 })).sort((a, b) => b.usedBytes - a.usedBytes) };
+  }
+
   // ---------- plans, grant, revoke ----------
   @Get("plans")
-  plans() { return { plans: [{ id: "access", label: "Account", kind: "access" }], note: "UCA Share is free: a grant creates the account (with Share's own invite email)." }; }
+  plans() { return { plans: [{ id: "access", label: "Account", kind: "access" }], note: "Sending needs UCA Pro or UCA Max (set on ucagg.de, the bundles); a grant here only creates the account (with Share's own invite email)." }; }
 
   private async freeUsername(email: string) {
     let base = email.split("@")[0].replace(/[^a-zA-Z0-9_.]/g, "_").replace(/^[._]+/, "").slice(0, 26);

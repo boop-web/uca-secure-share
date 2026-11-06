@@ -6,6 +6,7 @@ import { FileService } from "src/file/file.service";
 import { PrismaService } from "src/prisma/prisma.service";
 import { ReverseShareService } from "src/reverseShare/reverseShare.service";
 import { SHARE_DIRECTORY } from "../constants";
+import { VISIT_MS } from "src/uca/downloads.service";
 
 @Injectable()
 export class JobsService {
@@ -43,6 +44,36 @@ export class JobsService {
       this.logger.log(`Deleted ${expiredShares.length} expired shares`);
     }
     JobsService.lastExpiredCleanup = { at: Date.now(), deleted: expiredShares.length };
+  }
+
+  /**
+   * UCA Share v2: every 5 minutes, expired shares and shares whose downloads are used up (ended + VISIT_MS for the
+   * last visit to finish) are deleted with their files - the space comes back to the sender at once anyway (only live
+   * shares count), this frees the disk.
+   */
+  @Cron("*/5 * * * *")
+  async deleteEndedShares() {
+    const now = new Date();
+    const rows = await this.prisma.share.findMany({
+      where: { OR: [
+        { AND: [{ expiration: { lt: now } }, { expiration: { not: moment(0).toDate() } }] },
+        { endedAt: { lt: new Date(now.getTime() - VISIT_MS) } },
+      ] },
+      select: { id: true },
+    });
+    let deleted = 0;
+    for (const s of rows) {
+      try {
+        await this.fileService.deleteAllFiles(s.id);
+        await this.prisma.share.delete({ where: { id: s.id } });
+        deleted++;
+      } catch (e) {
+        this.logger.warn(`cleanup ${s.id}: ${(e as Error).message}`);
+      }
+    }
+    if (deleted) this.logger.log(`Deleted ${deleted} ended or expired shares`);
+    JobsService.lastExpiredCleanup = { at: Date.now(), deleted };
+    return deleted;
   }
 
   @Cron("0 * * * *")

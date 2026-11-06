@@ -3,19 +3,19 @@ import { HomepageDto } from "../types/homepage.type";
 // Built-in homepage copy. The admin editor (/admin/homepage) can override
 // every field; until an admin has saved once, these are shown.
 export const HOMEPAGE_DEFAULTS: Required<HomepageDto> = {
-  title: "Send files with a link.\nSecure, private and free.",
+  title: "Send a file to someone.\nOne link, then it ends.",
   description:
-    "Secure file sharing without the hassle: upload a file, get a link, send it to anyone. Set an expiry, a password or a download limit. No account needed, no paywall.",
-  bullet1Name: "Encrypted transfer",
+    "UCA Share is the sending tool of the UCA ecosystem: drop a file or a photo, get one link, send it to anyone. The link ends after the downloads you chose or after 1 to 3 days - and you see every download. Part of UCA Pro and UCA Max.",
+  bullet1Name: "Ends when you say",
   bullet1Desc:
-    "Files travel over TLS to our own server and can only be opened with the share link.",
-  bullet2Name: "No paywall",
+    "After 1 to 10 downloads or after 1, 2 or 3 days. Then the files are deleted - nothing stays behind.",
+  bullet2Name: "See every download",
   bullet2Desc:
-    "Free to use: no subscription, no ads, no tracking. Built for personal use as part of UCA.",
-  bullet3Name: "You stay in control",
+    "Download 2, today 14:32, Android phone - number, time and device type. No IP address, no location.",
+  bullet3Name: "In UCA Pro and UCA Max",
   bullet3Desc:
-    "Choose how long a share lives and who can open it. Expired shares are removed automatically.",
-  buttonText: "Upload",
+    "Share comes with the UCA bundles on ucagg.de, and works from UCA AI on your PC too.",
+  buttonText: "Send a file",
 };
 
 export type HomepageRecord = HomepageDto & { updatedBy?: string | null };

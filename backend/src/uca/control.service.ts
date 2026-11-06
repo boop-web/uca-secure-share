@@ -9,6 +9,7 @@ import { EmailService } from "src/email/email.service";
 import { JobsService } from "src/jobs/jobs.service";
 import { PrismaService } from "src/prisma/prisma.service";
 import { stringToTimespan } from "src/utils/date.util";
+import { PlanService } from "./plan.service";
 import { UcaCoreService } from "./uca-core.service";
 
 export const STARTED = Date.now();
@@ -27,6 +28,13 @@ export const SETTINGS: SettingDef[] = [
   { key: "share.maxSize", label: "Largest share", type: "bytes", min: 1_000_000, max: 1_000_000_000_000, help: "All files of one share together." },
   { key: "share.maxExpiration", label: "Longest expiry", type: "duration", min: 0, max: 10 * 365 * 86400, help: "0 = no limit (people may also pick \"never\")." },
   { key: "share.chunkSize", label: "Upload chunk size", type: "bytes", min: 1_000_000, max: 90_000_000, help: "One upload request carries one chunk; nginx accepts up to 100 MB." },
+  { key: "plans.proPerLink", label: "UCA Pro: largest link", type: "bytes", min: 1_000_000, max: 1_000_000_000_000, help: "All files of one link." },
+  { key: "plans.proStorage", label: "UCA Pro: space for live links", type: "bytes", min: 1_000_000, max: 10_000_000_000_000 },
+  { key: "plans.maxPerLink", label: "UCA Max: largest link", type: "bytes", min: 1_000_000, max: 1_000_000_000_000 },
+  { key: "plans.maxStorage", label: "UCA Max: space for live links", type: "bytes", min: 1_000_000, max: 10_000_000_000_000 },
+  { key: "plans.lowDiskGB", label: "Low disk below (GB)", type: "number", min: 0, max: 10000, help: "New links get smaller limits." },
+  { key: "plans.fullDiskGB", label: "Uploads paused below (GB)", type: "number", min: 0, max: 10000 },
+  { key: "plans.lowDiskPercent", label: "Limits on low disk (%)", type: "number", min: 1, max: 100 },
   { key: "share.zipCompressionLevel", label: "ZIP compression", type: "number", min: 0, max: 9, help: "0 = store only (fastest), 9 = smallest files." },
   { key: "share.allowRegistration", label: "Anyone can sign up", type: "boolean" },
   { key: "share.allowUnauthenticatedShares", label: "Share without an account", type: "boolean", help: "Visitors may upload without signing in." },
@@ -45,7 +53,7 @@ const fromSeconds = (s: number) => {
   return `${Math.max(1, Math.round(s / 60))} minutes`;
 };
 
-export interface Check { name: string; ok: boolean; detail?: string }
+export interface Check { name: string; ok: boolean; detail?: string; level?: string }
 export interface Report {
   at: string; ok: boolean; seconds: number; by: string; problems: string[]; checks: Check[];
   people: number; new24h: number; active24h: number; disk: { freeGB: number | null; freePct: number | null };
@@ -64,6 +72,7 @@ export class ControlService {
     private config: ConfigService,
     private email: EmailService,
     private uca: UcaCoreService,
+    private plans: PlanService,
   ) {}
 
   // ---------- small facts ----------
@@ -115,6 +124,9 @@ export class ControlService {
       detail: !smtpOn ? "not configured" : `${this.config.get("smtp.host")}:${this.config.get("smtp.port")}${this.lastSmtp ? ` · login ${this.lastSmtp.ok ? "ok" : "failed"} ${ago(this.lastSmtp.at)}` : ""}` });
     const d = this.disk();
     checks.push({ name: "storage", ok: d.freePct == null || d.freePct >= 10, detail: `${d.freeGB ?? "?"} GB free (${d.freePct ?? "?"}%) · uploads ${mb(this.uploadsBytes())} MB` });
+    // the free disk as Share sees it (owner, 6 Nov 2026): low = smaller new links, full = uploads paused
+    const dk = this.plans.disk(true);
+    checks.push({ name: "disk", ok: dk.level === "ok", level: dk.level, detail: dk.freeGB == null ? "unknown" : `${dk.freeGB} GB free${dk.level === "low" ? ` - under ${dk.lowGB} GB: new links get ${dk.lowPercent}% of the plan limits` : dk.level === "full" ? ` - under ${dk.fullGB} GB: uploads paused` : ""}` });
     const c = JobsService.lastExpiredCleanup;
     const upMin = (Date.now() - STARTED) / 60_000;
     checks.push({ name: "expired-share cleanup", ok: c ? Date.now() - c.at < 2 * 3600_000 : upMin < 70,

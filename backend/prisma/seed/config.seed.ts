@@ -76,6 +76,56 @@ export const configVariables = {
       secret: false,
     },
   },
+  // UCA Share v2 (6 Nov 2026): what UCA Pro / UCA Max may send (bytes); admins have no limit. The owner may raise them.
+  plans: {
+    proPerLink: {
+      type: "filesize",
+      defaultValue: String(250 * 1024 * 1024),
+      secret: false,
+    },
+    proStorage: {
+      type: "filesize",
+      defaultValue: String(1024 * 1024 * 1024),
+      secret: false,
+    },
+    maxPerLink: {
+      type: "filesize",
+      defaultValue: String(750 * 1024 * 1024),
+      secret: false,
+    },
+    maxStorage: {
+      type: "filesize",
+      defaultValue: String(Math.round(2.5 * 1024 * 1024 * 1024)),
+      secret: false,
+    },
+    maxDays: {
+      type: "number",
+      defaultValue: "3",
+      secret: false,
+    },
+    maxDownloads: {
+      type: "number",
+      defaultValue: "10",
+      secret: false,
+    },
+    // the server's free disk (owner, 6 Nov 2026): under lowDiskGB new links get lowDiskPercent of the plan's limits,
+    // under fullDiskGB new uploads are paused (downloads keep working)
+    lowDiskGB: {
+      type: "number",
+      defaultValue: "10",
+      secret: false,
+    },
+    fullDiskGB: {
+      type: "number",
+      defaultValue: "5",
+      secret: false,
+    },
+    lowDiskPercent: {
+      type: "number",
+      defaultValue: "50",
+      secret: false,
+    },
+  },
   cache: {
     "redis-enabled": {
       type: "boolean",

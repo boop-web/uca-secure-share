@@ -7,6 +7,7 @@ import {
 import { Request } from "express";
 import * as moment from "moment";
 import { PrismaService } from "src/prisma/prisma.service";
+import { assertNotEnded } from "src/uca/downloads.service";
 import { ShareSecurityGuard } from "src/share/guard/shareSecurity.guard";
 import { ShareService } from "src/share/share.service";
 import { ConfigService } from "src/config/config.service";
@@ -47,6 +48,7 @@ export class FileSecurityGuard extends ShareSecurityGuard {
       ) {
         throw new NotFoundException("File not found");
       }
+      await assertNotEnded(this._prisma, share, request);   // UCA Share v2: downloads used up
 
       if (share.security?.password)
         throw new ForbiddenException("This share is password protected");

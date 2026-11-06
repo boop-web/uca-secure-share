@@ -9,7 +9,9 @@ import {
   MultiSelect,
   NumberInput,
   PasswordInput,
+  SegmentedControl,
   Select,
+  Slider,
   Stack,
   Text,
   Textarea,
@@ -32,6 +34,9 @@ import { CreateShare } from "../../../types/share.type";
 import { getExpirationPreview } from "../../../utils/date.util";
 import toast from "../../../utils/toast.util";
 import { Timespan } from "../../../types/timespan.type";
+import { UcaMe } from "../../../services/uca.service";
+import LinkModeScene from "../../uca/LinkModeScene";
+import QuotaBar from "../../uca/QuotaBar";
 
 const showCreateUploadModal = (
   modals: ModalsContextProps,
@@ -43,6 +48,7 @@ const showCreateUploadModal = (
     maxExpiration: Timespan;
     shareIdLength: number;
     simplified: boolean;
+    plan?: UcaMe | null;
   },
   files: FileUpload[],
   uploadCallback: (createShare: CreateShare, files: FileUpload[]) => void,
@@ -115,10 +121,21 @@ const CreateUploadModalBody = ({
     enableEmailRecepients: boolean;
     maxExpiration: Timespan;
     shareIdLength: number;
+    plan?: UcaMe | null;
   };
 }) => {
   const modals = useModals();
   const t = useTranslate();
+  // UCA Share v2: with a plan every link has one mode; an admin may still pick Share's own expiry
+  const plan = options.isReverseShare ? null : options.plan || null;
+  const [mode, setMode] = useState<"downloads" | "days">("downloads");
+  const [downloads, setDownloads] = useState(1);
+  const [days, setDays] = useState(3);
+  const [adminCustom, setAdminCustom] = useState(false);
+  const useMode = !!plan && !adminCustom;
+  const totalSize = files.reduce((n, f) => n + f.size, 0);
+  const maxDl = plan?.limits.maxDownloads || 10;
+  const maxDays = plan?.limits.maxDays || 3;
 
   const generatedLink = generateShareId(options.shareIdLength);
 
@@ -168,6 +185,24 @@ const CreateUploadModalBody = ({
     if (!(await shareService.isShareIdAvailable(values.link))) {
       form.setFieldError("link", t("upload.modal.link.error.taken"));
     } else {
+      if (useMode) {
+        uploadCallback(
+          {
+            id: values.link,
+            name: values.name,
+            expiration: `${maxDays}-days`,
+            recipients: values.recipients,
+            description: values.description,
+            security: { password: values.password || undefined },
+            mode,
+            ...(mode === "downloads" ? { maxDownloads: downloads } : { days }),
+            totalSize,
+          },
+          files,
+        );
+        modals.closeAll();
+        return;
+      }
       const expirationString = form.values.never_expires
         ? "never"
         : form.values.expiration_num + form.values.expiration_unit;
@@ -266,7 +301,56 @@ const CreateUploadModalBody = ({
           >
             {`${window.location.origin}/s/${form.values.link}`}
           </Text>
-          {!options.isReverseShare && (
+          {useMode && (
+            <Stack spacing={10}>
+              <Text size="sm" weight={500}>How the link ends</Text>
+              <SegmentedControl
+                fullWidth
+                value={mode}
+                onChange={(v) => setMode(v as "downloads" | "days")}
+                data={[
+                  { value: "downloads", label: "Downloads" },
+                  { value: "days", label: "Days" },
+                ]}
+              />
+              {mode === "downloads" ? (
+                <>
+                  <Text size="xs" color="dimmed">
+                    Ends after {downloads} download{downloads === 1 ? "" : "s"} - or after {maxDays} days, whichever comes first.
+                  </Text>
+                  <Slider
+                    min={1}
+                    max={maxDl}
+                    step={1}
+                    value={downloads}
+                    onChange={setDownloads}
+                    label={(v) => `${v}`}
+                    marks={Array.from({ length: maxDl }, (_, i) => ({ value: i + 1, label: String(i + 1) }))}
+                    mb={18}
+                  />
+                </>
+              ) : (
+                <>
+                  <Text size="xs" color="dimmed">
+                    Ends after {days} day{days === 1 ? "" : "s"}. Any number of downloads until then.
+                  </Text>
+                  <SegmentedControl
+                    fullWidth
+                    value={String(days)}
+                    onChange={(v) => setDays(Number(v))}
+                    data={Array.from({ length: maxDays }, (_, i) => ({ value: String(i + 1), label: `${i + 1} day${i ? "s" : ""}` }))}
+                  />
+                </>
+              )}
+              <LinkModeScene mode={mode} n={downloads} days={days} label={false} />
+              <Text size="xs" color="dimmed">You see every download (number, time, device type) in My shares. When the link ends, its files are deleted.</Text>
+              <QuotaBar me={plan} adding={totalSize} />
+            </Stack>
+          )}
+          {plan?.plan === "admin" && (
+            <Checkbox label="Admin: Share's own expiry instead of a mode" checked={adminCustom} onChange={(e) => setAdminCustom(e.currentTarget.checked)} />
+          )}
+          {!options.isReverseShare && !useMode && (
             <>
               <Grid align={form.errors.expiration_num ? "center" : "flex-end"}>
                 <Col xs={6}>
@@ -447,16 +531,18 @@ const CreateUploadModalBody = ({
                     autoComplete="new-password"
                     {...form.getInputProps("password")}
                   />
-                  <NumberInput
-                    min={1}
-                    type="number"
-                    variant="filled"
-                    placeholder={t(
-                      "upload.modal.accordion.security.max-views.placeholder",
-                    )}
-                    label={t("upload.modal.accordion.security.max-views.label")}
-                    {...form.getInputProps("maxViews")}
-                  />
+                  {!useMode && (
+                    <NumberInput
+                      min={1}
+                      type="number"
+                      variant="filled"
+                      placeholder={t(
+                        "upload.modal.accordion.security.max-views.placeholder",
+                      )}
+                      label={t("upload.modal.accordion.security.max-views.label")}
+                      {...form.getInputProps("maxViews")}
+                    />
+                  )}
                 </Stack>
               </Accordion.Panel>
             </Accordion.Item>

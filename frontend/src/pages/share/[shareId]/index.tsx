@@ -34,7 +34,14 @@ const Share = ({ shareId }: { shareId: string }) => {
       })
       .catch((e) => {
         const { error } = e.response.data;
-        if (error == "share_max_views_exceeded") {
+        if (error == "share_download_limit") {
+          showErrorModal(
+            modals,
+            "This link has ended",
+            "It reached its number of downloads. Ask the sender for a new link.",
+            "go-home",
+          );
+        } else if (error == "share_max_views_exceeded") {
           showErrorModal(
             modals,
             t("share.error.visitor-limit-exceeded.title"),
@@ -57,7 +64,14 @@ const Share = ({ shareId }: { shareId: string }) => {
       })
       .catch((e) => {
         const { error } = e.response.data;
-        if (e.response.status == 404) {
+        if (error == "share_download_limit") {
+          showErrorModal(
+            modals,
+            "This link has ended",
+            "It reached its number of downloads. Ask the sender for a new link.",
+            "go-home",
+          );
+        } else if (e.response.status == 404) {
           if (error == "share_removed") {
             showErrorModal(
               modals,

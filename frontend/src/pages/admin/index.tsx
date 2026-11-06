@@ -3,6 +3,7 @@ import Link from "next/link";
 import { TbHome, TbLink, TbRadar2, TbSettings, TbUsers } from "react-icons/tb";
 import { FormattedMessage } from "react-intl";
 import Meta from "../../components/Meta";
+import DiskStatus from "../../components/uca/DiskStatus";
 import useTranslate from "../../hooks/useTranslate.hook";
 import { ui } from "../../styles/mantine.style";
 
@@ -86,6 +87,7 @@ const Admin = () => {
           <FormattedMessage id="admin.title" />
         </Title>
       </Stack>
+      <DiskStatus />
       <SimpleGrid cols={2} spacing="md" breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
         {managementOptions.map((item, i) => (
           <Link href={item.route} key={item.route} className={classes.item} style={{ animationDelay: `${i * 50}ms` }}>
